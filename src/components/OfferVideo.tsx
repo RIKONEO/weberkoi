@@ -39,14 +39,3 @@ function KoiIcon() {
     </svg>
   );
 }
-
-/** Mała miniatura w barwach odmiany, np. w koszyku. */
-export function KoiThumb({ variety }: { variety: string }) {
-  return (
-    <div className="video video--compact" data-variety={variety}>
-      <div className="video__placeholder">
-        <KoiIcon />
-      </div>
-    </div>
-  );
-}

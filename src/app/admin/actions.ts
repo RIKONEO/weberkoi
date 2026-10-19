@@ -7,19 +7,15 @@ import { SESSION_COOKIE, SESSION_DAYS, checkPassword, createSessionToken, verify
 import {
   ENQUIRY_STATUSES,
   type EnquiryStatus,
-  ORDER_STATUSES,
-  type OrderStatus,
   deleteOffer,
   getOffer,
-  getOrderWithItems,
   offerHasOrders,
   saveOffer,
   setEnquiryStatus,
+  setOfferFlag,
   setShippingPaused,
-  updateOrder,
 } from "@/lib/data";
 import { parseOfferForm } from "@/lib/offerForm";
-import { stripe } from "@/lib/stripe";
 
 export async function requireAdmin() {
   const jar = await cookies();
@@ -69,27 +65,21 @@ export async function saveOfferAction(form: FormData) {
 export async function deleteOfferAction(form: FormData) {
   await requireAdmin();
   const id = String(form.get("id") ?? "");
-  if (await offerHasOrders(id)) redirect(withError(`/admin/oferty/${id}`, "Ta oferta ma zamówienia, więc nie można jej usunąć. Ukryj ją zamiast tego."));
+  if (await offerHasOrders(id)) redirect(withError(`/admin/oferty/${id}`, "Ta oferta ma dawne zamówienia ze sklepu, więc nie można jej usunąć. Ukryj ją zamiast tego."));
   await deleteOffer(id);
   refreshShop();
   redirect("/admin/oferty");
 }
 
-export async function updateOrderAction(form: FormData) {
+/** Szybkie przełączniki na liście ofert: wyróżnienie i widoczność w sklepie. */
+export async function setOfferFlagAction(form: FormData) {
   await requireAdmin();
-  const no = String(form.get("no") ?? "");
-  const status = String(form.get("status") ?? "") as OrderStatus;
-  if (!(status in ORDER_STATUSES)) redirect(withError(`/admin/zamowienia/${no}`, "Nieznany status."));
-  const trackingNo = String(form.get("trackingNo") ?? "").trim() || null;
-  const note = String(form.get("note") ?? "").trim() || null;
-  const before = await getOrderWithItems(no);
-  await updateOrder(no, { status, trackingNo, note });
-  // Anulowane w panelu, a nieopłacone: zamykamy stronę płatności, żeby klient nie zapłacił za zwolnione ryby.
-  if (status === "anulowane" && before?.stripeSessionId && !before.paidAt && before.status !== "anulowane") {
-    await stripe()?.checkout.sessions.expire(before.stripeSessionId).catch(() => {});
-  }
-  refreshShop();
-  redirect(`/admin/zamowienia/${no}?zapisano=1`);
+  const id = String(form.get("id") ?? "");
+  const flag = String(form.get("flag") ?? "");
+  if (flag !== "featured" && flag !== "published") return;
+  await setOfferFlag(id, flag, form.get("on") === "1");
+  refreshShop(id);
+  revalidatePath("/admin/oferty");
 }
 
 export async function setEnquiryStatusAction(form: FormData) {

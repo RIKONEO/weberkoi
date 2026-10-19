@@ -6,10 +6,27 @@ import { listOffers } from "@/lib/data";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const latest = (await listOffers()).slice(0, 3);
+  const all = await listOffers();
+  const featured = all.filter((o) => o.featured);
+  const latest = all.filter((o) => !o.featured).sort((a, b) => b.addedAt.localeCompare(a.addedAt)).slice(0, 3);
   return (
     <main>
       <PondHero />
+      {featured.length > 0 && (
+        <section className="wrap section">
+          <div className="section__head">
+            <div>
+              <div className="eyebrow">Polecamy</div>
+              <h2>Wyróżnione grupy</h2>
+            </div>
+          </div>
+          <div className="grid">
+            {featured.map((o) => (
+              <OfferCard key={o.id} offer={o} />
+            ))}
+          </div>
+        </section>
+      )}
       <section className="wrap section">
         <div className="section__head">
           <div>
@@ -30,11 +47,11 @@ export default async function Home() {
         <div className="steps">
           <div>
             <h3>Wybierasz na filmiku</h3>
-            <p className="muted">Każda oferta to filmik z całą grupą ryb. Ryby mają numery, więc możesz wskazać konkretną albo kupić sztukę z grupy.</p>
+            <p className="muted">Każda oferta to filmik z całą grupą ryb. Zatrzymaj go, zrób screenshot wybranej ryby i wyślij nam w formularzu przy ofercie.</p>
           </div>
           <div>
-            <h3>Płacisz online</h3>
-            <p className="muted">BLIK, karta albo Przelewy24 przez Stripe. Przy odbiorze osobistym możesz też zapłacić na miejscu.</p>
+            <h3>Potwierdzamy i ustalamy płatność</h3>
+            <p className="muted">Odezwiemy się, potwierdzimy rybę i podamy numer konta do przelewu. Przy odbiorze osobistym możesz zapłacić gotówką.</p>
           </div>
           <div>
             <h3>Odbierasz albo czekasz na kuriera</h3>

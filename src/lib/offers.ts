@@ -32,6 +32,8 @@ export type Offer = {
   videoLength?: string;
   description: string;
   published: boolean;
+  /** Wyróżniona: pokazywana na górze strony głównej i katalogu. */
+  featured: boolean;
   addedAt: string;
 };
 

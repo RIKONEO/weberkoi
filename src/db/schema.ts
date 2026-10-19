@@ -1,4 +1,6 @@
-import { boolean, date, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, customType, date, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+
+const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
 export const offers = pgTable("offers", {
   id: text("id").primaryKey(), // slug w adresie /oferta/<id>
@@ -24,6 +26,8 @@ export const offers = pgTable("offers", {
   addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Tabele orders i order_items zostały po dawnym koszyku i płatnościach Stripe. Sklep ich już
+// nie używa, ale zostawiamy je w bazie razem z historią zamówień.
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   no: text("no").notNull().unique(),
@@ -68,9 +72,18 @@ export const enquiries = pgTable("enquiries", {
   second: text("second").notNull().default(""),
   name: text("name").notNull(),
   email: text("email").notNull(),
+  phone: text("phone").notNull().default(""),
   message: text("message").notNull().default(""),
   status: text("status").notNull().default("nowe"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Screenshoty z filmiku dołączone do zgłoszenia. Osobno, żeby lista zgłoszeń nie ładowała obrazków. */
+export const enquiryScreenshots = pgTable("enquiry_screenshots", {
+  id: serial("id").primaryKey(),
+  enquiryId: integer("enquiry_id").notNull().references(() => enquiries.id, { onDelete: "cascade" }),
+  mime: text("mime").notNull(),
+  data: bytea("data").notNull(),
 });
 
 export const settings = pgTable("settings", {
