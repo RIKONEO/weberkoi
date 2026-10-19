@@ -1,7 +1,7 @@
 // Walidacja zamówień i zapytań po stronie serwera. Ceny zawsze liczymy tutaj z danych
 // oferty, nigdy nie ufamy kwotom przysłanym z przeglądarki.
-import { type Offer, available, getOffer } from "./offers";
-import { DELIVERY, type DeliveryMethod, PICKUP_WEEKDAYS, SHIPPING_WEEKDAYS, isoDate, shippingPaused } from "./shipping";
+import { type Offer, available } from "./offers";
+import { DELIVERY, type DeliveryMethod, PICKUP_WEEKDAYS, SHIPPING_WEEKDAYS, isoDate } from "./shipping";
 
 export type PaymentMethod = "blik" | "karta" | "przelew" | "przy-odbiorze";
 export const PAYMENTS: Record<PaymentMethod, { label: string; note: string }> = {
@@ -34,8 +34,8 @@ function checkSelection(offer: Offer, qty: unknown, picks: unknown): Result<{ qt
 
 export type Enquiry = { offerId: string; qty: number; picks: number[] | null; second: string; name: string; email: string; message: string };
 
-export function parseEnquiry(body: Record<string, unknown>): Result<Enquiry> {
-  const offer = getOffer(str(body.offerId));
+export function parseEnquiry(body: Record<string, unknown>, findOffer: (id: string) => Offer | undefined): Result<Enquiry> {
+  const offer = findOffer(str(body.offerId));
   if (!offer) return { ok: false, error: "Nie znaleziono oferty." };
   const sel = checkSelection(offer, body.qty, body.picks);
   if (!sel.ok) return sel;
@@ -57,16 +57,26 @@ export type Order = {
   total: number;
 };
 
-export function parseOrder(body: Record<string, unknown>, today = new Date()): Result<Order> {
+type OrderContext = { findOffer: (id: string) => Offer | undefined; shippingPaused: boolean; today?: Date };
+
+export function parseOrder(body: Record<string, unknown>, { findOffer, shippingPaused, today = new Date() }: OrderContext): Result<Order> {
   if (!Array.isArray(body.lines) || !body.lines.length) return { ok: false, error: "Koszyk jest pusty." };
   const lines: OrderLine[] = [];
   for (const raw of body.lines as Record<string, unknown>[]) {
-    const offer = getOffer(str(raw?.offerId));
+    const offer = findOffer(str(raw?.offerId));
     if (!offer) return { ok: false, error: "Jedna z ofert w koszyku nie jest już dostępna." };
     if (!offer.price) return { ok: false, error: `Cenę ${offer.variety} ustalamy indywidualnie. Wyślij zapytanie z karty oferty.` };
     const sel = checkSelection(offer, raw.qty, raw.picks);
     if (!sel.ok) return sel;
     lines.push({ offerId: offer.id, title: offer.title, ...sel.value, unitPrice: offer.price });
+  }
+  // Kilka pozycji z tej samej oferty razem nie może przekroczyć dostępnych ryb ani powtórzyć numeru.
+  for (const id of new Set(lines.map((l) => l.offerId))) {
+    const offer = findOffer(id)!;
+    const same = lines.filter((l) => l.offerId === id);
+    const picks = same.flatMap((l) => l.picks ?? []);
+    if (new Set(picks).size !== picks.length) return { ok: false, error: `Ta sama ryba z oferty ${offer.variety} jest w koszyku dwa razy.` };
+    if (same.reduce((s, l) => s + l.qty, 0) > available(offer)) return { ok: false, error: `W grupie ${offer.variety} zostało tylko ${available(offer)} ryb.` };
   }
 
   const c = (body.customer ?? {}) as Record<string, unknown>;

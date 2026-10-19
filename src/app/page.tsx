@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { PondHero } from "@/components/PondHero";
 import { OfferCard } from "@/components/OfferCard";
-import { OFFERS } from "@/lib/offers";
+import { listOffers } from "@/lib/data";
 
-export default function Home() {
-  const latest = [...OFFERS].sort((a, b) => b.addedAt.localeCompare(a.addedAt)).slice(0, 3);
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const latest = (await listOffers()).slice(0, 3);
   return (
     <main>
       <PondHero />

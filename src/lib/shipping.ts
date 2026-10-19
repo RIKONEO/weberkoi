@@ -1,6 +1,5 @@
 // Zasady dostawy żywych ryb. Wysyłamy tylko pon–śr, żeby paczka nie czekała w sortowni
-// przez weekend. Wstrzymanie wysyłek (upał, mróz) przejdzie do panelu admina w kroku 3;
-// do tego czasu steruje nim zmienna środowiskowa.
+// przez weekend. Wysyłki (np. w upał) wstrzymuje się w panelu admina.
 
 export type DeliveryMethod = "kurier" | "odbior";
 
@@ -19,8 +18,6 @@ export const DELIVERY: Record<DeliveryMethod, { label: string; note: string; pri
 
 export const SHIPPING_WEEKDAYS = [1, 2, 3]; // pon, wt, śr
 export const PICKUP_WEEKDAYS = [1, 2, 3, 4, 5, 6]; // pon–sob
-
-export const shippingPaused = process.env.NEXT_PUBLIC_SHIPPING_PAUSED === "true";
 
 /** Najbliższe `n` dni (od jutra) wypadających w podane dni tygodnia, jako YYYY-MM-DD. */
 export function nextDays(weekdays: number[], n: number, from = new Date()): string[] {

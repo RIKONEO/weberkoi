@@ -3,21 +3,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OfferPurchase } from "@/components/OfferPurchase";
 import { OfferVideo } from "@/components/OfferVideo";
-import { OFFERS, available, formatPLN, getOffer, sizeLabel } from "@/lib/offers";
+import { getOffer } from "@/lib/data";
+import { available, formatPLN, sizeLabel } from "@/lib/offers";
 
 type Props = { params: Promise<{ id: string }> };
 
-export function generateStaticParams() {
-  return OFFERS.map((o) => ({ id: o.id }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const offer = getOffer((await params).id);
+  const offer = await getOffer((await params).id);
   return offer ? { title: offer.title, description: offer.description } : {};
 }
 
 export default async function OfferPage({ params }: Props) {
-  const offer = getOffer((await params).id);
+  const offer = await getOffer((await params).id);
   if (!offer) notFound();
   return (
     <div className="wrap section">

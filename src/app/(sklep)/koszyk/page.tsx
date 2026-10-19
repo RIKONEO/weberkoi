@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useCart } from "@/components/cart/CartProvider";
-import { OfferVideo } from "@/components/OfferVideo";
-import { formatPLN, getOffer } from "@/lib/offers";
+import { KoiThumb } from "@/components/OfferVideo";
+import { formatPLN } from "@/lib/offers";
 
 export default function CartPage() {
   const { lines, ready, total, remove } = useCart();
@@ -19,10 +19,9 @@ export default function CartPage() {
         <>
           <ul className="lines">
             {lines.map((l, i) => {
-              const offer = getOffer(l.offerId);
               return (
                 <li key={`${l.offerId}-${i}`} className="line">
-                  {offer && <OfferVideo offer={offer} compact />}
+                  <KoiThumb variety={l.variety} />
                   <div>
                     <Link href={`/oferta/${l.offerId}`}><b>{l.title}</b></Link>
                     <div className="muted small">
