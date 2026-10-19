@@ -1,6 +1,6 @@
 # WEBER Nishikigoi – sklep z koi
 
-Sklep internetowy z karpiami koi. Każda oferta to filmik z grupą ryb jednej odmiany; klient wybiera konkretną rybę po numerze albo kupuje sztukę z grupy. Ceny stałe lub „zapytaj o cenę”, wysyłka kurierem (pon–śr) albo odbiór osobisty.
+Sklep internetowy z karpiami koi. Każda oferta to filmik z grupą ryb jednej odmiany; klient zatrzymuje filmik, robi screenshot wybranej ryby i wysyła go w formularzu przy ofercie. Sklep sam kontaktuje się z klientem, a płatność to przelew na konto albo gotówka przy odbiorze (bez płatności online i koszyka). Ceny stałe lub „zapytaj o cenę”, wysyłka kurierem (pon–śr) albo odbiór osobisty.
 
 ## Uruchomienie
 
@@ -11,7 +11,7 @@ npm run build    # wersja produkcyjna
 npm run lint
 ```
 
-Ustawienia w `.env.local` (wzór w `.env.example`): adres bazy PostgreSQL, hasło do panelu, sekret sesji i klucze Stripe.
+Ustawienia w `.env.local` (wzór w `.env.example`): adres bazy PostgreSQL, hasło do panelu i sekret sesji.
 
 Pierwsze uruchomienie bazy:
 
@@ -24,28 +24,23 @@ Po zmianie `src/db/schema.ts`: `npm run db:generate`, a potem `npm run db:migrat
 
 ## Panel admina
 
-`/admin` (hasło z `ADMIN_PASSWORD`): zamówienia ze zmianą statusu i numerem przesyłki, zapytania o cenę, oferty z adresem filmiku i sprzedanymi numerami, wstrzymanie wysyłek. Zamówienie od razu rezerwuje ryby; anulowanie je zwalnia.
+`/admin` (hasło z `ADMIN_PASSWORD`, działa też na telefonie): zgłoszenia klientów ze screenshotami, telefonem i e-mailem; oferty z edycją, wyróżnianiem („Polecamy” na górze strony głównej i katalogu) i ukrywaniem; wstrzymanie wysyłek. Sprzedane ryby wpisuje się ręcznie w edycji oferty.
 
-## Płatności (Stripe)
+Screenshoty są zmniejszane w przeglądarce i na serwerze (JPG do 1600 px) i trzymane w bazie, w tabeli `enquiry_screenshots`. Widzi je tylko zalogowany admin.
 
-Klient płaci na stronie Stripe Checkout (BLIK, karta, Przelewy24), a wraca na `/zamowienie/<nr>?k=<klucz>`. W panelu Stripe trzeba włączyć metody BLIK i Przelewy24 (Settings → Payment methods) i dodać webhook na `https://<domena>/api/stripe` ze zdarzeniami `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_succeeded` i `checkout.session.async_payment_failed`.
-
-Ryby są zarezerwowane przez 45 minut. Jeśli klient nie zapłaci, Stripe zamyka płatność, a zamówienie anuluje się samo i zwalnia ryby. Wpłata zmienia status na „Opłacone”. Zwroty robi się w panelu Stripe.
-
-Do testów lokalnych: `stripe listen --forward-to localhost:3000/api/stripe` (Stripe CLI) podaje sekret webhooka dla kluczy testowych.
+Tabele `orders` i `order_items` zostały po dawnym koszyku ze Stripe. Sklep ich nie używa, ale zostają w bazie z historią.
 
 ## Struktura
 
 - `src/app/page.tsx` – strona główna z animowanym stawem (`src/components/PondHero.tsx`).
 - `src/lib/pond/` – staw w Three.js: ryby, woda, liście lotosu, karmienie.
-- `src/app/(sklep)/` – katalog, karta oferty, koszyk, kasa, strony informacyjne.
+- `src/app/(sklep)/` – katalog, karta oferty z formularzem zgłoszenia, strony informacyjne.
 - `src/db/` – schemat bazy (Drizzle ORM), połączenie i przykładowe oferty.
 - `src/lib/data.ts` – zapytania do bazy dla sklepu i panelu.
 - `src/app/admin/` – panel admina; `src/middleware.ts` pilnuje logowania.
-- `src/lib/orders.ts` – walidacja zamówień i zapytań po stronie serwera.
-- `src/app/api/` – przyjmowanie zamówień i zapytań o cenę, webhook Stripe.
-- `src/lib/stripe.ts` – tworzenie płatności w Stripe Checkout.
+- `src/lib/enquiry.ts` – walidacja zgłoszeń po stronie serwera.
+- `src/app/api/zapytania/` – przyjmowanie zgłoszeń ze screenshotami.
 
 ## Co dalej
 
-E-maile do klientów i sklepu, wdrożenie na serwer.
+E-mail do sklepu o nowym zgłoszeniu.

@@ -75,6 +75,7 @@ export function parseOfferForm(f: FormData, existingId?: string): { ok: true; va
       videoLength: url("videoLength"),
       description: get("description"),
       published: f.get("published") === "on",
+      featured: f.get("featured") === "on",
     },
   };
 }

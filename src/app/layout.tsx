@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource/marcellus";
 import "@fontsource-variable/manrope";
 import "./globals.css";
-import { CartProvider } from "@/components/cart/CartProvider";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
@@ -17,10 +16,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pl">
       <body>
-        <CartProvider>
-          {children}
-          <SiteFooter />
-        </CartProvider>
+        {children}
+        <SiteFooter />
       </body>
     </html>
   );

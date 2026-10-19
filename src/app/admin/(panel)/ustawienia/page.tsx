@@ -14,7 +14,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       <form action={setShippingPausedAction} className="panel">
         <label className="opt">
           <input type="checkbox" id="paused" name="paused" defaultChecked={paused} />
-          <span>Wstrzymaj wysyłki kurierem<small>Na upał lub mróz. Klienci zobaczą w kasie tylko odbiór osobisty.</small></span>
+          <span>Wstrzymaj wysyłki kurierem<small>Na upał lub mróz. Na stronie „Wysyłka i odbiór” klienci zobaczą, że zapraszamy tylko po odbiór osobisty.</small></span>
         </label>
         <div><button type="submit" className="btn btn--primary">Zapisz</button></div>
       </form>

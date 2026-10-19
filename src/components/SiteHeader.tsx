@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useCart } from "./cart/CartProvider";
 
 const NAV = [
   { href: "/katalog", label: "Katalog" },
@@ -14,7 +13,6 @@ const NAV = [
 /** `overlay` = przezroczysty nagłówek nad stawem na stronie głównej. */
 export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const path = usePathname();
-  const { count } = useCart();
   return (
     <header className={overlay ? "site-header site-header--overlay" : "site-header"}>
       <div className="wrap site-header__bar">
@@ -34,9 +32,8 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           <Link href="/katalog" aria-current={path.startsWith("/katalog") ? "page" : undefined} className="nav-show-sm">
             Katalog
           </Link>
-          <Link href="/koszyk" className="cart-link" aria-current={path === "/koszyk" || path === "/kasa" ? "page" : undefined}>
-            Koszyk
-            {count > 0 && <span className="badge num" aria-label={`${count} w koszyku`}>{count}</span>}
+          <Link href="/kontakt" aria-current={path.startsWith("/kontakt") ? "page" : undefined} className="nav-show-sm">
+            Kontakt
           </Link>
         </nav>
       </div>

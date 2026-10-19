@@ -10,7 +10,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   await requireAdmin();
   return (
     <>
-      <header className="site-header">
+      <header className="site-header admin-header">
         <div className="wrap site-header__bar">
           <Link href="/admin" className="brand"><span><b>WEBER</b><small>Panel sklepu</small></span></Link>
           <AdminNav />

@@ -4,8 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/admin/zamowienia", label: "Zamówienia" },
-  { href: "/admin/zapytania", label: "Zapytania" },
+  { href: "/admin/zapytania", label: "Zgłoszenia" },
   { href: "/admin/oferty", label: "Oferty" },
   { href: "/admin/ustawienia", label: "Ustawienia" },
 ];
@@ -13,7 +12,7 @@ const LINKS = [
 export function AdminNav() {
   const path = usePathname();
   return (
-    <nav className="site-nav" aria-label="Panel">
+    <nav className="admin-nav" aria-label="Panel">
       {LINKS.map((l) => (
         <Link key={l.href} href={l.href} aria-current={path.startsWith(l.href) ? "page" : undefined}>{l.label}</Link>
       ))}

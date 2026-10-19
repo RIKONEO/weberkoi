@@ -46,9 +46,10 @@ export function OfferForm({ offer }: { offer?: Offer }) {
           <label className="field">Numery sprzedanych ryb<input id="sold" name="sold" defaultValue={offer?.sold.join(", ")} placeholder="np. 3, 8, 14" /></label>
           <label className="field">Sprzedane z grupy (bez numeru)<input id="groupSold" name="groupSold" inputMode="numeric" defaultValue={offer?.groupSold ?? 0} /></label>
         </div>
-        <p className="muted small">Zamówienia ze sklepu uzupełniają te pola same. Zmieniaj je ręcznie tylko przy sprzedaży poza sklepem.</p>
+        <p className="muted small">Po sprzedaży ryby wpisz tu jej numer albo zwiększ liczbę sprzedanych z grupy. Gdy wszystkie są sprzedane, klienci nie mogą wysłać zgłoszenia.</p>
       </fieldset>
       <label className="opt"><input type="checkbox" id="published" name="published" defaultChecked={offer?.published ?? true} /><span>Widoczna w sklepie</span></label>
+      <label className="opt"><input type="checkbox" id="featured" name="featured" defaultChecked={offer?.featured ?? false} /><span>Wyróżniona<small>Pokazujemy ją na górze strony głównej i katalogu z etykietą „Polecamy”.</small></span></label>
       <div><button type="submit" className="btn btn--primary">{offer ? "Zapisz zmiany" : "Dodaj ofertę"}</button></div>
     </form>
   );

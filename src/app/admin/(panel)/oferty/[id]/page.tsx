@@ -26,7 +26,7 @@ export default async function EditOfferPage({ params, searchParams }: Props) {
       <form action={deleteOfferAction} className="row">
         <input type="hidden" name="id" value={offer.id} />
         <button type="submit" className="link-btn small">Usuń ofertę</button>
-        <span className="muted small">Ofertę z zamówieniami można tylko ukryć.</span>
+        <span className="muted small">Ofertę z dawnymi zamówieniami ze sklepu można tylko ukryć.</span>
       </form>
     </div>
   );

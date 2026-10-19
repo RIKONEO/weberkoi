@@ -4,8 +4,11 @@ import { OfferVideo } from "./OfferVideo";
 
 export function OfferCard({ offer }: { offer: Offer }) {
   return (
-    <Link href={`/oferta/${offer.id}`} className="tile">
-      <OfferVideo offer={offer} />
+    <Link href={`/oferta/${offer.id}`} className={offer.featured ? "tile tile--featured" : "tile"}>
+      <div className="tile__media">
+        <OfferVideo offer={offer} />
+        {offer.featured && <span className="tile__badge">Polecamy</span>}
+      </div>
       <div className="tile__meta">
         <h3>{offer.variety}</h3>
         {offer.price ? (
