@@ -165,10 +165,11 @@ export function koiTexture(kind: KoiKind, r: Rand): THREE.Texture {
   c.strokeStyle = "rgba(255,255,255,.25)";
   c.lineWidth = 1;
   for (let i = -7; i <= 7; i++) { c.beginPath(); c.moveTo(X0 + 4, CY + i * 1.2); c.quadraticCurveTo(70, CY + i * 6, 22, CY + i * 11); c.stroke(); }
-  fin(c, K.fin, 372, CY - 80, 36, 19, -0.55);
-  fin(c, K.fin, 372, CY + 80, 36, 19, 0.55);
-  fin(c, K.fin, 262, CY - 58, 20, 10, -0.5);
-  fin(c, K.fin, 262, CY + 58, 20, 10, 0.5);
+  // nasada płetwy przy ciele z przodu, końcówka odchylona do tyłu (w stronę ogona)
+  fin(c, K.fin, 347, CY - 67, 36, 19, 0.55);
+  fin(c, K.fin, 347, CY + 67, 36, 19, -0.55);
+  fin(c, K.fin, 250, CY - 54, 20, 10, 0.5);
+  fin(c, K.fin, 250, CY + 54, 20, 10, -0.5);
   // ciało ze wzorem odmiany
   const [pat, p] = canvas(TW, TH);
   K.paint(p, r);
