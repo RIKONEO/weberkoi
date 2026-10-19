@@ -7,23 +7,20 @@ import { formatPLN } from "@/lib/offers";
 import { PAYMENTS, type PaymentMethod } from "@/lib/orders";
 import { DELIVERY, type DeliveryMethod, PICKUP_WEEKDAYS, SHIPPING_WEEKDAYS, formatDay, nextDays } from "@/lib/shipping";
 
-type Done = { orderNo: string; total: number; delivery: DeliveryMethod; day: string; email: string };
-
 export function CheckoutForm({ shippingPaused }: { shippingPaused: boolean }) {
-  const { lines, ready, total, clear } = useCart();
+  const { lines, ready, total } = useCart();
   const [delivery, setDelivery] = useState<DeliveryMethod>(shippingPaused ? "odbior" : "kurier");
   const days = useMemo(() => nextDays(delivery === "kurier" ? SHIPPING_WEEKDAYS : PICKUP_WEEKDAYS, 4), [delivery]);
   const [day, setDay] = useState("");
-  const [payment, setPayment] = useState<PaymentMethod>("blik");
+  const [payment, setPayment] = useState<PaymentMethod>("online");
   const [customer, setCustomer] = useState({ name: "", email: "", phone: "", street: "", city: "" });
   const [terms, setTerms] = useState(false);
   const [state, setState] = useState<"idle" | "sending" | "error">("idle");
   const [error, setError] = useState("");
-  const [done, setDone] = useState<Done | null>(null);
 
   useEffect(() => setDay(days[0]), [days]);
   useEffect(() => {
-    if (payment === "przy-odbiorze" && delivery !== "odbior") setPayment("blik");
+    if (payment === "przy-odbiorze" && delivery !== "odbior") setPayment("online");
   }, [delivery, payment]);
 
   const deliveryPrice = DELIVERY[delivery].price;
@@ -42,30 +39,12 @@ export function CheckoutForm({ shippingPaused }: { shippingPaused: boolean }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Nie udało się złożyć zamówienia.");
-      setDone({ orderNo: data.orderNo, total: data.total, delivery: data.delivery, day: data.day, email: customer.email });
-      clear();
+      // Dalej strona płatności Stripe albo, przy płatności na miejscu, strona zamówienia (ona czyści koszyk).
+      window.location.assign(data.redirect);
     } catch (err) {
       setState("error");
       setError(err instanceof Error ? err.message : "Nie udało się złożyć zamówienia.");
     }
-  }
-
-  if (done) {
-    return (
-      <div className="wrap section flow">
-        <div className="eyebrow">Zamówienie {done.orderNo}</div>
-        <h1 className="page-title">Dziękujemy za zamówienie.</h1>
-        <p className="notice">
-          {done.delivery === "kurier"
-            ? `Wyślemy ryby w ${formatDay(done.day, true)}. Numer przesyłki dostaniesz e-mailem.`
-            : `Ryby będą czekać na odbiór w ${formatDay(done.day, true)}, 10:00–18:00.`}{" "}
-          Podsumowanie wyślemy na {done.email}.
-        </p>
-        <div className="sum"><span className="sum__total">Do zapłaty</span><span className="sum__total num">{formatPLN(done.total)}</span></div>
-        <p className="muted small">Płatność online podłączymy w kolejnym kroku. Na razie zamówienie jest tylko przyjmowane.</p>
-        <div><Link href="/katalog" className="btn">Wróć do katalogu</Link></div>
-      </div>
-    );
   }
 
   if (ready && !lines.length) {
@@ -146,7 +125,7 @@ export function CheckoutForm({ shippingPaused }: { shippingPaused: boolean }) {
       {state === "error" && <p className="notice notice--error" role="alert">{error}</p>}
       <div className="row row--end">
         <button type="submit" className="btn btn--primary" disabled={state === "sending" || !lines.length}>
-          {state === "sending" ? "Wysyłanie…" : "Zamawiam i płacę"}
+          {state === "sending" ? "Wysyłanie…" : payment === "online" ? "Zamawiam i płacę" : "Zamawiam"}
         </button>
       </div>
     </form>

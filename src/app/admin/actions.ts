@@ -11,6 +11,7 @@ import {
   type OrderStatus,
   deleteOffer,
   getOffer,
+  getOrderWithItems,
   offerHasOrders,
   saveOffer,
   setEnquiryStatus,
@@ -18,6 +19,7 @@ import {
   updateOrder,
 } from "@/lib/data";
 import { parseOfferForm } from "@/lib/offerForm";
+import { stripe } from "@/lib/stripe";
 
 export async function requireAdmin() {
   const jar = await cookies();
@@ -80,7 +82,12 @@ export async function updateOrderAction(form: FormData) {
   if (!(status in ORDER_STATUSES)) redirect(withError(`/admin/zamowienia/${no}`, "Nieznany status."));
   const trackingNo = String(form.get("trackingNo") ?? "").trim() || null;
   const note = String(form.get("note") ?? "").trim() || null;
+  const before = await getOrderWithItems(no);
   await updateOrder(no, { status, trackingNo, note });
+  // Anulowane w panelu, a nieopłacone: zamykamy stronę płatności, żeby klient nie zapłacił za zwolnione ryby.
+  if (status === "anulowane" && before?.stripeSessionId && !before.paidAt && before.status !== "anulowane") {
+    await stripe()?.checkout.sessions.expire(before.stripeSessionId).catch(() => {});
+  }
   refreshShop();
   redirect(`/admin/zamowienia/${no}?zapisano=1`);
 }

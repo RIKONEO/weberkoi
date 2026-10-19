@@ -67,7 +67,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       total: lines.reduce((s, l) => s + l.qty * l.unitPrice, 0),
       add,
       remove: (index) => setLines((cur) => cur.filter((_, j) => j !== index)),
-      clear: () => setLines([]),
+      clear: () => setLines((cur) => (cur.length ? [] : cur)),
     }),
     [lines, ready, add],
   );

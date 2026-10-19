@@ -34,7 +34,7 @@ export default async function Home() {
           </div>
           <div>
             <h3>Płacisz online</h3>
-            <p className="muted">BLIK, karta albo szybki przelew. Przy odbiorze osobistym możesz też zapłacić na miejscu.</p>
+            <p className="muted">BLIK, karta albo Przelewy24 przez Stripe. Przy odbiorze osobistym możesz też zapłacić na miejscu.</p>
           </div>
           <div>
             <h3>Odbierasz albo czekasz na kuriera</h3>

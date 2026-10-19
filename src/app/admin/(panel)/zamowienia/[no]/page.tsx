@@ -47,7 +47,12 @@ export default async function OrderPage({ params, searchParams }: Props) {
         <dt>Telefon</dt><dd>{o.phone}</dd>
         <dt>Dostawa</dt><dd>{o.delivery === "kurier" ? `Kurier, wysyłka ${formatDay(o.day, true)}` : `Odbiór osobisty, ${formatDay(o.day, true)}`}</dd>
         {o.delivery === "kurier" && <><dt>Adres</dt><dd>{o.street}, {o.city}</dd></>}
-        <dt>Płatność</dt><dd>{PAYMENTS[o.payment as PaymentMethod]?.label ?? o.payment}</dd>
+        <dt>Płatność</dt>
+        <dd>
+          {PAYMENTS[o.payment as PaymentMethod]?.label ?? o.payment}
+          {o.paidAt ? `, zapłacono ${o.paidAt.toLocaleString("pl-PL")}` : o.payment === "online" ? ", jeszcze nie zapłacono" : ""}
+          {o.stripeSessionId && <> · <a href={`https://dashboard.stripe.com/checkout/sessions/${o.stripeSessionId}`} target="_blank" rel="noreferrer">Stripe</a></>}
+        </dd>
         <dt>Złożone</dt><dd>{o.createdAt.toLocaleString("pl-PL")}</dd>
       </dl>
       <form action={updateOrderAction} className="panel">
@@ -57,7 +62,9 @@ export default async function OrderPage({ params, searchParams }: Props) {
             {Object.entries(ORDER_STATUSES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </label>
-        <p className="muted small">Anulowanie zwalnia zarezerwowane ryby z powrotem do sprzedaży.</p>
+        <p className="muted small">
+          Anulowanie zwalnia zarezerwowane ryby z powrotem do sprzedaży.{o.paidAt && " Pieniądze za opłacone zamówienie zwracasz w panelu Stripe."}
+        </p>
         {o.delivery === "kurier" && (
           <label className="field">Numer przesyłki<input id="trackingNo" name="trackingNo" defaultValue={o.trackingNo ?? ""} /></label>
         )}
