@@ -15,6 +15,13 @@
       "when": 1792410057782,
       "tag": "0001_platnosci",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792434302818,
+      "tag": "0002_yummy_katie_power",
+      "breakpoints": true
     }
   ]
 }

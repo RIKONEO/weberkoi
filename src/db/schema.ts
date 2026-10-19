@@ -20,6 +20,7 @@ export const offers = pgTable("offers", {
   videoLength: text("video_length"),
   description: text("description").notNull().default(""),
   published: boolean("published").notNull().default(true),
+  featured: boolean("featured").notNull().default(false),
   addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -1,0 +1,1 @@
+ALTER TABLE "offers" ADD COLUMN "featured" boolean DEFAULT false NOT NULL;
