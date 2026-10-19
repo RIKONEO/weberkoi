@@ -3,11 +3,9 @@
 import { type Offer, available } from "./offers";
 import { DELIVERY, type DeliveryMethod, PICKUP_WEEKDAYS, SHIPPING_WEEKDAYS, isoDate } from "./shipping";
 
-export type PaymentMethod = "blik" | "karta" | "przelew" | "przy-odbiorze";
+export type PaymentMethod = "online" | "przy-odbiorze";
 export const PAYMENTS: Record<PaymentMethod, { label: string; note: string }> = {
-  blik: { label: "BLIK", note: "Kod z aplikacji banku" },
-  karta: { label: "Karta płatnicza", note: "Visa, Mastercard" },
-  przelew: { label: "Szybki przelew", note: "Przez Przelewy24" },
+  online: { label: "Płatność online", note: "BLIK, karta lub Przelewy24 na bezpiecznej stronie Stripe" },
   "przy-odbiorze": { label: "Przy odbiorze", note: "Gotówka lub karta na miejscu" },
 };
 

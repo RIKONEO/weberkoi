@@ -40,6 +40,12 @@ export const orders = pgTable("orders", {
   total: integer("total").notNull(),
   trackingNo: text("tracking_no"),
   note: text("note"),
+  /** Losowy klucz w linku do strony zamówienia, żeby obcy nie podejrzał cudzego zamówienia. */
+  accessKey: text("access_key").notNull().default(""),
+  stripeSessionId: text("stripe_session_id"),
+  /** Adres strony płatności Stripe, póki sesja jest otwarta. */
+  paymentUrl: text("payment_url"),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
