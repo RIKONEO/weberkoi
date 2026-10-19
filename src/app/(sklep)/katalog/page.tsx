@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { OfferCard } from "@/components/OfferCard";
-import { OFFERS, SIZE_FILTERS, VARIETIES } from "@/lib/offers";
+import { listOffers } from "@/lib/data";
+import { SIZE_FILTERS, VARIETIES } from "@/lib/offers";
 
 export const metadata: Metadata = { title: "Katalog koi" };
+export const dynamic = "force-dynamic";
 
 type Search = { odmiana?: string; rozmiar?: string; cena?: string };
 
@@ -16,13 +18,13 @@ function href(cur: Search, patch: Search) {
 export default async function Catalog({ searchParams }: { searchParams: Promise<Search> }) {
   const sp = await searchParams;
   const size = SIZE_FILTERS.find((s) => s.id === sp.rozmiar);
-  const list = OFFERS.filter(
+  const list = (await listOffers()).filter(
     (o) =>
       (!sp.odmiana || o.variety === sp.odmiana) &&
       (!size || size.test(o)) &&
       (sp.cena !== "stala" || o.price !== null) &&
       (sp.cena !== "zapytaj" || o.price === null),
-  ).sort((a, b) => b.addedAt.localeCompare(a.addedAt));
+  );
 
   return (
     <div className="wrap section">
