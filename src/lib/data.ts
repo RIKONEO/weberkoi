@@ -1,6 +1,6 @@
 // Dostęp do bazy dla sklepu i panelu. Tylko po stronie serwera.
 import "server-only";
-import { desc, eq, inArray, sql as dsql } from "drizzle-orm";
+import { desc, eq, gte, inArray, sql as dsql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Offer, Variety } from "./offers";
 import type { Enquiry } from "./enquiry";
@@ -109,9 +109,25 @@ export async function deleteOffer(id: string) {
   });
 }
 
-export async function dashboardCounts() {
-  const [e] = await db.select({ n: dsql<number>`count(*)::int` }).from(enquiries).where(eq(enquiries.status, "nowe"));
-  const [f] = await db.select({ n: dsql<number>`count(*)::int` }).from(offers).where(eq(offers.published, true));
-  const [h] = await db.select({ n: dsql<number>`count(*)::int` }).from(offers).where(eq(offers.featured, true));
-  return { newEnquiries: e.n, liveOffers: f.n, featuredOffers: h.n };
+/** Wszystko do pulpitu panelu: zgłoszenia z ostatnich dni i stan ofert. */
+export async function dashboardData(days = 14) {
+  const since = new Date(Date.now() - days * 24 * 3600 * 1000);
+  const [byStatus, perDay, latest, all] = await Promise.all([
+    db.select({ status: enquiries.status, n: dsql<number>`count(*)::int` }).from(enquiries).groupBy(enquiries.status),
+    db
+      .select({ day: dsql<string>`to_char(${enquiries.createdAt} at time zone 'Europe/Warsaw', 'YYYY-MM-DD')`, n: dsql<number>`count(*)::int` })
+      .from(enquiries)
+      .where(gte(enquiries.createdAt, since))
+      .groupBy(dsql`1`),
+    listEnquiries().then((rows) => rows.slice(0, 5)),
+    listOffers({ includeHidden: true }),
+  ]);
+  const status = Object.fromEntries(byStatus.map((r) => [r.status, r.n])) as Partial<Record<EnquiryStatus, number>>;
+  const counts = new Map(perDay.map((r) => [r.day, r.n]));
+  const fmt = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Warsaw" }); // YYYY-MM-DD
+  const series = Array.from({ length: days }, (_, i) => {
+    const day = fmt.format(new Date(Date.now() - (days - 1 - i) * 24 * 3600 * 1000));
+    return { day, n: counts.get(day) ?? 0 };
+  });
+  return { status, series, latest, offers: all };
 }
