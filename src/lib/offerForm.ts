@@ -1,5 +1,4 @@
 // Walidacja formularza oferty z panelu admina.
-import { VARIETIES } from "./offers";
 import type { OfferInput } from "./data";
 
 export function slugify(s: string): string {
@@ -21,7 +20,7 @@ export function parseNumberList(s: string): number[] | null {
   return [...new Set(nums)].sort((a, b) => a - b);
 }
 
-export function parseOfferForm(f: FormData, existingId?: string): { ok: true; value: OfferInput } | { ok: false; error: string } {
+export function parseOfferForm(f: FormData, varieties: string[], existingId?: string): { ok: true; value: OfferInput } | { ok: false; error: string } {
   const get = (k: string) => String(f.get(k) ?? "").trim();
   const int = (k: string) => (get(k) === "" ? NaN : Number(get(k)));
 
@@ -30,7 +29,7 @@ export function parseOfferForm(f: FormData, existingId?: string): { ok: true; va
   const id = existingId ?? (slugify(get("id") || title) || "");
   if (!id) return { ok: false, error: "Podaj adres oferty (same litery, cyfry i myślniki)." };
   const variety = get("variety");
-  if (!(VARIETIES as string[]).includes(variety)) return { ok: false, error: "Wybierz odmianę z listy." };
+  if (!varieties.includes(variety)) return { ok: false, error: "Wybierz odmianę z listy." };
 
   const sizeMin = int("sizeMin"), sizeMax = int("sizeMax"), count = int("count");
   if (!Number.isInteger(sizeMin) || !Number.isInteger(sizeMax) || sizeMin < 1 || sizeMax < sizeMin) return { ok: false, error: "Podaj rozmiar od–do w cm (np. 15 i 20)." };
@@ -78,4 +77,12 @@ export function parseOfferForm(f: FormData, existingId?: string): { ok: true; va
       featured: f.get("featured") === "on",
     },
   };
+}
+
+/** Nazwa odmiany: bez zbędnych spacji, każde słowo z wielkiej litery („shiro utsuri” → „Shiro Utsuri”). */
+export function parseVarietyName(raw: string): { ok: true; value: string } | { ok: false; error: string } {
+  const name = raw.replace(/\s+/g, " ").trim();
+  if (!name) return { ok: false, error: "Wpisz nazwę odmiany." };
+  if (name.length > 40) return { ok: false, error: "Nazwa odmiany może mieć najwyżej 40 znaków." };
+  return { ok: true, value: name.replace(/(^|[\s-])(\p{L})/gu, (_, sep: string, ch: string) => sep + ch.toLocaleUpperCase("pl-PL")) };
 }

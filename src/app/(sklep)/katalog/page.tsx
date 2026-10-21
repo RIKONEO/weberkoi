@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { OfferCard } from "@/components/OfferCard";
-import { listOffers } from "@/lib/data";
-import { SIZE_FILTERS, VARIETIES } from "@/lib/offers";
+import { listOffers, listVarieties } from "@/lib/data";
+import { SIZE_FILTERS } from "@/lib/offers";
 
 export const metadata: Metadata = { title: "Katalog koi" };
 export const dynamic = "force-dynamic";
@@ -18,7 +18,8 @@ function href(cur: Search, patch: Search) {
 export default async function Catalog({ searchParams }: { searchParams: Promise<Search> }) {
   const sp = await searchParams;
   const size = SIZE_FILTERS.find((s) => s.id === sp.rozmiar);
-  const list = (await listOffers()).filter(
+  const [all, varieties] = await Promise.all([listOffers(), listVarieties()]);
+  const list = all.filter(
     (o) =>
       (!sp.odmiana || o.variety === sp.odmiana) &&
       (!size || size.test(o)) &&
@@ -35,7 +36,7 @@ export default async function Catalog({ searchParams }: { searchParams: Promise<
         <div className="filters__row">
           <span className="eyebrow">Odmiana</span>
           <Link className="chip" aria-pressed={!sp.odmiana} href={href(sp, { odmiana: undefined })}>Wszystkie</Link>
-          {VARIETIES.map((v) => (
+          {varieties.map((v) => (
             <Link key={v} className="chip" aria-pressed={sp.odmiana === v} href={href(sp, { odmiana: v })}>{v}</Link>
           ))}
         </div>

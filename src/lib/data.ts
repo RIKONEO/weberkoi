@@ -1,17 +1,17 @@
 // Dostęp do bazy dla sklepu i panelu. Tylko po stronie serwera.
 import "server-only";
-import { desc, eq, gte, inArray, sql as dsql } from "drizzle-orm";
+import { asc, desc, eq, gte, inArray, sql as dsql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import type { Offer, Variety } from "./offers";
+import type { Offer } from "./offers";
 import type { Enquiry } from "./enquiry";
 
-const { offers, orderItems, enquiries, enquiryScreenshots } = schema;
+const { offers, orderItems, enquiries, enquiryScreenshots, varieties } = schema;
 type OfferRow = typeof offers.$inferSelect;
 
 function toOffer(r: OfferRow): Offer {
   return {
     id: r.id,
-    variety: r.variety as Variety,
+    variety: r.variety,
     title: r.title,
     breeder: r.breeder,
     age: r.age,
@@ -38,6 +38,12 @@ export async function listOffers({ includeHidden = false } = {}): Promise<Offer[
 export async function getOffer(id: string, { includeHidden = false } = {}): Promise<Offer | undefined> {
   const [r] = await db.select().from(offers).where(eq(offers.id, id));
   return r && (includeHidden || r.published) ? toOffer(r) : undefined;
+}
+
+/** Odmiany w kolejności ustalonej w panelu. */
+export async function listVarieties(): Promise<string[]> {
+  const rows = await db.select({ name: varieties.name }).from(varieties).orderBy(asc(varieties.position), asc(varieties.name));
+  return rows.map((r) => r.name);
 }
 
 export async function createEnquiry(e: Enquiry, screenshots: { mime: string; data: Buffer }[]) {
@@ -97,6 +103,57 @@ export async function deleteOffer(id: string) {
   await db.transaction(async (tx) => {
     await tx.delete(enquiries).where(eq(enquiries.offerId, id));
     await tx.delete(offers).where(eq(offers.id, id));
+  });
+}
+
+// --- odmiany ---
+
+/** Odmiany z liczbą ofert, które ich używają (do strony „Odmiany” w panelu). */
+export async function listVarietiesWithCounts() {
+  const [names, used] = await Promise.all([
+    listVarieties(),
+    db.select({ variety: offers.variety, n: dsql<number>`count(*)::int` }).from(offers).groupBy(offers.variety),
+  ]);
+  const counts = new Map(used.map((r) => [r.variety, r.n]));
+  return names.map((name) => ({ name, offers: counts.get(name) ?? 0 }));
+}
+
+/** Dodaje odmianę na końcu listy; false, gdy taka już jest (bez względu na wielkość liter). */
+export async function addVariety(name: string) {
+  const all = await listVarieties();
+  if (all.some((v) => v.toLowerCase() === name.toLowerCase())) return false;
+  const [r] = await db.select({ max: dsql<number>`coalesce(max(${varieties.position}), 0)::int` }).from(varieties);
+  await db.insert(varieties).values({ name, position: (r?.max ?? 0) + 1 });
+  return true;
+}
+
+/** Zmienia nazwę odmiany razem ze wszystkimi ofertami tej odmiany. */
+export async function renameVariety(from: string, to: string) {
+  const all = await listVarieties();
+  if (all.some((v) => v !== from && v.toLowerCase() === to.toLowerCase())) return false;
+  await db.transaction(async (tx) => {
+    await tx.update(varieties).set({ name: to }).where(eq(varieties.name, from));
+    await tx.update(offers).set({ variety: to }).where(eq(offers.variety, from));
+  });
+  return true;
+}
+
+/** Usuwa odmianę; false, gdy jakaś oferta jej jeszcze używa. */
+export async function deleteVariety(name: string) {
+  const [r] = await db.select({ n: dsql<number>`count(*)::int` }).from(offers).where(eq(offers.variety, name));
+  if ((r?.n ?? 0) > 0) return false;
+  await db.delete(varieties).where(eq(varieties.name, name));
+  return true;
+}
+
+/** Przesuwa odmianę o jedno miejsce w górę albo w dół listy. */
+export async function moveVariety(name: string, dir: -1 | 1) {
+  const all = await listVarieties();
+  const i = all.indexOf(name), j = i + dir;
+  if (i < 0 || j < 0 || j >= all.length) return;
+  [all[i], all[j]] = [all[j], all[i]];
+  await db.transaction(async (tx) => {
+    for (const [pos, n] of all.entries()) await tx.update(varieties).set({ position: pos + 1 }).where(eq(varieties.name, n));
   });
 }
 

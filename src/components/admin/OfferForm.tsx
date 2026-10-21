@@ -1,8 +1,11 @@
-import { type Offer, VARIETIES } from "@/lib/offers";
+import Link from "next/link";
+import type { Offer } from "@/lib/offers";
 import { saveOfferAction } from "@/app/admin/actions";
 
 /** Formularz dodawania i edycji oferty; bez `offer` tworzy nową. */
-export function OfferForm({ offer }: { offer?: Offer }) {
+export function OfferForm({ offer, varieties }: { offer?: Offer; varieties: string[] }) {
+  // Odmiana usunięta z listy, a wciąż zapisana w ofercie, zostaje do wyboru, żeby zapis jej nie zgubił.
+  const options = offer && !varieties.includes(offer.variety) ? [offer.variety, ...varieties] : varieties;
   return (
     <form action={saveOfferAction} className="panel offer-form">
       {offer && <input type="hidden" name="existingId" value={offer.id} />}
@@ -14,9 +17,10 @@ export function OfferForm({ offer }: { offer?: Offer }) {
       )}
       <div className="two">
         <label className="field">Odmiana
-          <select id="variety" name="variety" defaultValue={offer?.variety ?? "Kohaku"}>
-            {VARIETIES.map((v) => <option key={v}>{v}</option>)}
+          <select id="variety" name="variety" defaultValue={offer?.variety ?? options[0]}>
+            {options.map((v) => <option key={v}>{v}</option>)}
           </select>
+          <Link href="/admin/odmiany" className="small">Dodaj albo usuń odmiany</Link>
         </label>
         <label className="field">Cena za sztukę (zł)
           <input id="price" name="price" inputMode="numeric" defaultValue={offer?.price ?? ""} placeholder="puste = zapytaj o cenę" />
