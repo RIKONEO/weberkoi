@@ -1,14 +1,8 @@
 // Typ oferty i funkcje pomocnicze wspólne dla sklepu i panelu. Dane są w bazie
 // (src/lib/data.ts); przykładowe oferty do startu są w src/db/seed.ts.
 
-export type Variety =
-  | "Kohaku"
-  | "Taisho Sanke"
-  | "Showa Sanshoku"
-  | "Tancho"
-  | "Ogon"
-  | "Chagoi"
-  | "Asagi";
+/** Nazwa odmiany; lista odmian jest w bazie (tabela varieties). */
+export type Variety = string;
 
 export type Offer = {
   id: string;
@@ -37,16 +31,6 @@ export type Offer = {
   addedAt: string;
 };
 
-
-export const VARIETIES: Variety[] = [
-  "Kohaku",
-  "Taisho Sanke",
-  "Showa Sanshoku",
-  "Tancho",
-  "Ogon",
-  "Chagoi",
-  "Asagi",
-];
 
 export const SIZE_FILTERS = [
   { id: "do-20", label: "do 20 cm", test: (o: Offer) => o.sizeCm[1] <= 20 },

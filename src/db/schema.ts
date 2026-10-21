@@ -2,6 +2,12 @@ import { boolean, customType, date, integer, jsonb, pgTable, serial, text, times
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
+/** Odmiany koi do wyboru w ofertach i filtrach katalogu. Właściciel dodaje je w panelu. */
+export const varieties = pgTable("varieties", {
+  name: text("name").primaryKey(),
+  position: integer("position").notNull().default(0),
+});
+
 export const offers = pgTable("offers", {
   id: text("id").primaryKey(), // slug w adresie /oferta/<id>
   variety: text("variety").notNull(),

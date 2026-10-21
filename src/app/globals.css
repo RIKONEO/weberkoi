@@ -224,6 +224,12 @@ legend { font-family: var(--display); font-size: 22px; margin-bottom: 8px; paddi
 .contact { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
 .contact a { text-decoration: underline; text-underline-offset: 2px; }
 .admin .shots { grid-template-columns: repeat(auto-fill, minmax(120px, 160px)); }
+.variety-add { flex-direction: row; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.variety-add .field { flex: 1 1 200px; }
+.variety { flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.variety__name { display: flex; gap: 8px; align-items: center; flex: 1 1 240px; min-width: 0; }
+.variety__name input { flex: 1; min-width: 0; background: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; color: var(--paper); font-size: 15px; }
+.variety button:disabled { opacity: 0.35; cursor: default; }
 @media (max-width: 800px) {
   .three { grid-template-columns: 1fr 1fr; }
   /* Na telefonie menu panelu schodzi do własnego wiersza i przewija się w poziomie, zamiast wypychać stronę. */

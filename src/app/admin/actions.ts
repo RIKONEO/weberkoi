@@ -7,14 +7,19 @@ import { SESSION_COOKIE, SESSION_DAYS, checkPassword, createSessionToken, verify
 import {
   ENQUIRY_STATUSES,
   type EnquiryStatus,
+  addVariety,
   deleteOffer,
+  deleteVariety,
   getOffer,
+  listVarieties,
+  moveVariety,
   offerHasOrders,
+  renameVariety,
   saveOffer,
   setEnquiryStatus,
   setOfferFlag,
 } from "@/lib/data";
-import { parseOfferForm } from "@/lib/offerForm";
+import { parseOfferForm, parseVarietyName } from "@/lib/offerForm";
 
 export async function requireAdmin() {
   const jar = await cookies();
@@ -51,7 +56,7 @@ export async function saveOfferAction(form: FormData) {
   await requireAdmin();
   const existingId = String(form.get("existingId") ?? "") || undefined;
   const back = existingId ? `/admin/oferty/${existingId}` : "/admin/oferty/nowa";
-  const parsed = parseOfferForm(form, existingId);
+  const parsed = parseOfferForm(form, await listVarieties(), existingId);
   if (!parsed.ok) redirect(withError(back, parsed.error));
   if (!existingId && (await getOffer(parsed.value.id, { includeHidden: true }))) {
     redirect(withError(back, `Oferta o adresie „${parsed.value.id}” już istnieje. Zmień adres.`));
@@ -86,4 +91,43 @@ export async function setEnquiryStatusAction(form: FormData) {
   const status = String(form.get("status") ?? "") as EnquiryStatus;
   if (status in ENQUIRY_STATUSES) await setEnquiryStatus(Number(form.get("id")), status);
   revalidatePath("/admin/zapytania");
+}
+
+// --- odmiany ---
+
+const VARIETIES_PAGE = "/admin/odmiany";
+
+export async function addVarietyAction(form: FormData) {
+  await requireAdmin();
+  const parsed = parseVarietyName(String(form.get("name") ?? ""));
+  if (!parsed.ok) redirect(withError(VARIETIES_PAGE, parsed.error));
+  if (!(await addVariety(parsed.value))) redirect(withError(VARIETIES_PAGE, `Odmiana „${parsed.value}” już jest na liście.`));
+  refreshShop();
+  redirect(`${VARIETIES_PAGE}?zapisano=1`);
+}
+
+export async function renameVarietyAction(form: FormData) {
+  await requireAdmin();
+  const from = String(form.get("from") ?? "");
+  const parsed = parseVarietyName(String(form.get("name") ?? ""));
+  if (!parsed.ok) redirect(withError(VARIETIES_PAGE, parsed.error));
+  if (parsed.value === from) redirect(VARIETIES_PAGE);
+  if (!(await renameVariety(from, parsed.value))) redirect(withError(VARIETIES_PAGE, `Odmiana „${parsed.value}” już jest na liście.`));
+  refreshShop();
+  redirect(`${VARIETIES_PAGE}?zapisano=1`);
+}
+
+export async function deleteVarietyAction(form: FormData) {
+  await requireAdmin();
+  const name = String(form.get("name") ?? "");
+  if (!(await deleteVariety(name))) redirect(withError(VARIETIES_PAGE, `Odmiany „${name}” używają oferty. Zmień w nich odmianę albo usuń je, a potem usuń odmianę.`));
+  refreshShop();
+  redirect(`${VARIETIES_PAGE}?zapisano=1`);
+}
+
+export async function moveVarietyAction(form: FormData) {
+  await requireAdmin();
+  await moveVariety(String(form.get("name") ?? ""), form.get("dir") === "up" ? -1 : 1);
+  refreshShop();
+  revalidatePath(VARIETIES_PAGE);
 }
