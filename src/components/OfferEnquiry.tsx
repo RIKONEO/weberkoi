@@ -1,10 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { type Offer, available } from "@/lib/offers";
 import { MAX_SCREENSHOTS } from "@/lib/enquiry";
+import { FishMarker } from "./FishMarker";
 
 type Shot = { file: Blob; name: string; url: string };
+/** Obrazek czekający na zaznaczenie ryby kółkiem. */
+type Pending = { id: number; file: Blob; name: string; second?: string; fromVideo?: boolean };
+
+export type EnquiryHandle = {
+  /** Dodaje stopklatkę z filmiku: najpierw klient zaznacza na niej rybę. Zwraca false, gdy nie ma już miejsca. */
+  addFrame: (frame: Blob, second: string) => boolean;
+};
 
 /** Zmniejsza zdjęcie w przeglądarce, żeby wysyłka z telefonu była szybka i mieściła się w limicie serwera. */
 async function shrink(file: File): Promise<Blob> {
@@ -23,34 +31,50 @@ async function shrink(file: File): Promise<Blob> {
   }
 }
 
-export function OfferEnquiry({ offer }: { offer: Offer }) {
+export function OfferEnquiry({ offer, frameGrab = false, ref }: { offer: Offer; frameGrab?: boolean; ref?: React.Ref<EnquiryHandle> }) {
   const left = available(offer);
   const input = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [shots, setShots] = useState<Shot[]>([]);
+  const [queue, setQueue] = useState<Pending[]>([]);
   const [qty, setQty] = useState(1);
   const [form, setForm] = useState({ name: "", phone: "", email: "", second: "", message: "", website: "" });
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState("");
 
   const urls = useRef<string[]>([]);
+  const nextId = useRef(0);
   useEffect(() => () => urls.current.forEach((u) => URL.revokeObjectURL(u)), []);
+
+  const free = MAX_SCREENSHOTS - shots.length - queue.length;
+  useImperativeHandle(ref, () => ({
+    addFrame(frame, second) {
+      if (free <= 0) return false;
+      setQueue((q) => [...q, { id: nextId.current++, file: frame, name: "stopklatka.jpg", second, fromVideo: true }]);
+      return true;
+    },
+  }), [free]);
 
   if (left === 0) {
     return <div className="panel"><p className="notice notice--warn">Wszystkie ryby z tej grupy są już sprzedane.</p></div>;
   }
 
   async function addFiles(list: FileList | null) {
-    const files = Array.from(list ?? []).filter((f) => f.type.startsWith("image/")).slice(0, MAX_SCREENSHOTS - shots.length);
-    const next = await Promise.all(
-      files.map(async (f) => {
-        const file = await shrink(f);
-        const url = URL.createObjectURL(file);
-        urls.current.push(url);
-        return { file, name: f.name, url };
-      }),
-    );
-    setShots((cur) => [...cur, ...next]);
+    const files = Array.from(list ?? []).filter((f) => f.type.startsWith("image/")).slice(0, free);
+    const next = await Promise.all(files.map(async (f) => ({ id: nextId.current++, file: await shrink(f), name: f.name })));
+    setQueue((q) => [...q, ...next]);
     if (input.current) input.current.value = "";
+  }
+
+  function marked(file: Blob) {
+    const done = queue[0];
+    const url = URL.createObjectURL(file);
+    urls.current.push(url);
+    setShots((cur) => [...cur, { file, name: done.name, url }]);
+    setQueue((q) => q.slice(1));
+    if (done.second && !form.second) setForm((f) => ({ ...f, second: done.second! }));
+    // Na telefonie formularz jest pod filmikiem; pokazujemy, że stopklatka do niego trafiła.
+    if (done.fromVideo) requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   function removeShot(i: number) {
@@ -64,7 +88,7 @@ export function OfferEnquiry({ offer }: { offer: Offer }) {
     e.preventDefault();
     if (!shots.length) {
       setState("error");
-      setError("Dodaj screenshot z filmiku, na którym widać rybę.");
+      setError(frameGrab ? "Zrób stopklatkę albo dodaj screenshot z filmiku, na którym widać rybę." : "Dodaj screenshot z filmiku, na którym widać rybę.");
       return;
     }
     setState("sending");
@@ -96,13 +120,18 @@ export function OfferEnquiry({ offer }: { offer: Offer }) {
   }
 
   return (
-    <form className="panel" onSubmit={send}>
+    <form ref={formRef} className="panel" onSubmit={send}>
       <h2 className="panel__title">Chcę tę rybę</h2>
       <ol className="howto small">
         <li>Zatrzymaj filmik, gdy dobrze widać wybraną rybę.</li>
-        <li>Zrób screenshot (zrzut ekranu).</li>
-        <li>Dodaj go tutaj i wyślij. Resztę ustalimy z Tobą sami.</li>
+        {frameGrab ? (
+          <li>Kliknij „Zrób stopklatkę” pod filmikiem albo dodaj własny screenshot.</li>
+        ) : (
+          <li>Zrób screenshot (zrzut ekranu) i dodaj go tutaj.</li>
+        )}
+        <li>Stuknij w rybę, żeby zaznaczyć ją kółkiem, i wyślij zgłoszenie. Resztę ustalimy z Tobą sami.</li>
       </ol>
+      {queue[0] && <FishMarker key={queue[0].id} image={queue[0].file} onDone={marked} onCancel={() => setQueue((q) => q.slice(1))} />}
 
       <div className="shots">
         {shots.map((s, i) => (
@@ -112,7 +141,7 @@ export function OfferEnquiry({ offer }: { offer: Offer }) {
             <button type="button" className="shot__remove" aria-label={`Usuń screenshot ${i + 1}`} onClick={() => removeShot(i)}>×</button>
           </figure>
         ))}
-        {shots.length < MAX_SCREENSHOTS && (
+        {free > 0 && (
           <label className="shot shot--add">
             <input ref={input} type="file" accept="image/*" multiple className="visually-hidden" onChange={(e) => addFiles(e.target.files)} />
             <span>+ Dodaj screenshot</span>

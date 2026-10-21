@@ -5,13 +5,29 @@ import { available } from "@/lib/offers";
  * Filmik oferty. Dopóki oferta nie ma wgranego filmiku, pokazujemy zaślepkę
  * w barwach odmiany, z tymi samymi informacjami co odtwarzacz.
  */
-export function OfferVideo({ offer, controls = false }: { offer: Offer; controls?: boolean }) {
+export function OfferVideo({
+  offer,
+  controls = false,
+  videoRef,
+  crossOrigin,
+  onError,
+}: {
+  offer: Offer;
+  controls?: boolean;
+  /** Na stronie oferty: dostęp do odtwarzacza, żeby zrobić stopklatkę. */
+  videoRef?: React.Ref<HTMLVideoElement>;
+  crossOrigin?: "anonymous";
+  onError?: () => void;
+}) {
   const left = available(offer);
   return (
     <div className="video" data-variety={offer.variety}>
       {offer.videoUrl ? (
         <video
+          ref={videoRef}
           src={offer.videoUrl}
+          crossOrigin={crossOrigin}
+          onError={onError}
           poster={offer.posterUrl}
           controls={controls}
           muted={!controls}
@@ -24,7 +40,8 @@ export function OfferVideo({ offer, controls = false }: { offer: Offer; controls
           <span>Filmik zostanie dodany</span>
         </div>
       )}
-      <span className="video__tag video__tag--play">▶ Filmik{offer.videoLength ? ` · ${offer.videoLength}` : ""}</span>
+      {/* Przy odtwarzaczu z przyciskami etykieta zasłaniałaby pasek przewijania. */}
+      {!(controls && offer.videoUrl) && <span className="video__tag video__tag--play">▶ Filmik{offer.videoLength ? ` · ${offer.videoLength}` : ""}</span>}
       <span className="video__tag video__tag--count num">
         {left} z {offer.count} dostępnych
       </span>
