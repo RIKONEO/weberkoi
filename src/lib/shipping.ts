@@ -1,5 +1,6 @@
 // Zasady dostawy żywych ryb. Wysyłamy tylko pon–śr, żeby paczka nie czekała w sortowni
 // przez weekend. Wysyłki (np. w upał) wstrzymuje się w panelu admina.
+import { CONTACT } from "./contact";
 
 export type DeliveryMethod = "kurier" | "odbior";
 
@@ -11,7 +12,7 @@ export const DELIVERY: Record<DeliveryMethod, { label: string; note: string; pri
   },
   odbior: {
     label: "Odbiór osobisty",
-    note: "ul. Przykładowa 12, Weberowo · pon–sob 10:00–18:00",
+    note: `${CONTACT.street}, ${CONTACT.city}`,
     price: 0,
   },
 };

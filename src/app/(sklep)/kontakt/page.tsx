@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CONTACT } from "@/lib/contact";
 
 export const metadata: Metadata = { title: "Kontakt" };
 
@@ -6,18 +7,26 @@ export default function ContactPage() {
   return (
     <div className="wrap section flow prose">
       <h1 className="page-title">Kontakt</h1>
-      <p>Masz pytanie o konkretną rybę albo chcesz przyjechać obejrzeć stawy? Napisz do nas na Facebooku albo mailem.</p>
+      <p>Masz pytanie o konkretną rybę albo chcesz przyjechać obejrzeć stawy? Zadzwoń, napisz SMS-a, maila albo wiadomość na Facebooku.</p>
       <dl className="specs">
-        <dt>Facebook</dt>
+        <dt>Telefon</dt>
         <dd>
-          <a href="https://www.facebook.com/profile.php?id=61574920259547" target="_blank" rel="noreferrer">WEBER Nishikigoi</a>
+          <a href={CONTACT.phoneHref}>{CONTACT.phone}</a> ({CONTACT.person})
         </dd>
         <dt>E-mail</dt>
-        <dd>kontakt@example.com</dd>
+        <dd>
+          <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
+        </dd>
+        <dt>Facebook</dt>
+        <dd>
+          <a href={CONTACT.facebook} target="_blank" rel="noreferrer">WEBER Nishikigoi</a>
+        </dd>
         <dt>Adres</dt>
-        <dd>ul. Przykładowa 12, Weberowo</dd>
+        <dd>
+          {CONTACT.street}, {CONTACT.city}
+        </dd>
       </dl>
-      <p className="notice notice--warn">E-mail i adres są przykładowe. Uzupełnimy je Waszymi danymi.</p>
+      <p className="muted">Przed przyjazdem zadzwoń, żebyśmy mogli umówić godzinę.</p>
     </div>
   );
 }
