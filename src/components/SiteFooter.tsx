@@ -7,7 +7,7 @@ export function SiteFooter() {
       <div className="wrap site-footer__row">
         <span>WEBER Nishikigoi · Koi Fish Seller</span>
         <nav aria-label="Informacje">
-          <Link href="/wysylka-i-odbior">Wysyłka i odbiór</Link>
+          <Link href="/odbior">Odbiór osobisty</Link>
           <Link href="/kontakt">Kontakt</Link>
           <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>
           <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>

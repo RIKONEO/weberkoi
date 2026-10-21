@@ -1,4 +1,4 @@
-// Dane kontaktowe sklepu, w jednym miejscu dla stron Kontakt, Wysyłka i stopki.
+// Dane kontaktowe sklepu, w jednym miejscu dla stron Kontakt, Odbiór osobisty i stopki.
 export const CONTACT = {
   person: "Marcin",
   phone: "887 398 896",

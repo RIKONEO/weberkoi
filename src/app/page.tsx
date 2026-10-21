@@ -51,11 +51,11 @@ export default async function Home() {
           </div>
           <div>
             <h3>Potwierdzamy i ustalamy płatność</h3>
-            <p className="muted">Odezwiemy się, potwierdzimy rybę i podamy numer konta do przelewu. Przy odbiorze osobistym możesz zapłacić gotówką.</p>
+            <p className="muted">Odezwiemy się, potwierdzimy rybę i umówimy termin. Zapłacisz gotówką przy odbiorze albo wcześniej przelewem.</p>
           </div>
           <div>
-            <h3>Odbierasz albo czekasz na kuriera</h3>
-            <p className="muted">Wysyłamy w poniedziałki, wtorki i środy, w workach z tlenem i kartonach termicznych.</p>
+            <h3>Odbierasz rybę u nas</h3>
+            <p className="muted">Przyjeżdżasz do Zakrzewa w umówionym terminie, a my pakujemy rybę w worek z tlenem. Nie wysyłamy ryb kurierem.</p>
           </div>
         </div>
       </section>

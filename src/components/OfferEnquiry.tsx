@@ -113,7 +113,7 @@ export function OfferEnquiry({ offer, frameGrab = false, ref }: { offer: Offer; 
     return (
       <div className="panel">
         <p className="notice" role="status">
-          Dziękujemy, mamy Twoje zgłoszenie. Odezwiemy się {form.phone ? "telefonicznie albo SMS-em" : `na ${form.email}`}, potwierdzimy rybę i ustalimy płatność oraz odbiór.
+          Dziękujemy, mamy Twoje zgłoszenie. Odezwiemy się {form.phone ? "telefonicznie albo SMS-em" : `na ${form.email}`}, potwierdzimy rybę i umówimy odbiór.
         </p>
       </div>
     );
@@ -176,14 +176,14 @@ export function OfferEnquiry({ offer, frameGrab = false, ref }: { offer: Offer; 
       <p className="muted small">Wystarczy telefon albo e-mail.</p>
       <label className="field">
         Wiadomość (opcjonalnie)
-        <textarea id="enq-message" rows={3} value={form.message} onChange={set("message")} placeholder="np. odbiór osobisty w sobotę" />
+        <textarea id="enq-message" rows={3} value={form.message} onChange={set("message")} placeholder="np. mogę przyjechać w sobotę" />
       </label>
       <label className="visually-hidden" aria-hidden="true">
         Strona www
         <input tabIndex={-1} autoComplete="off" value={form.website} onChange={set("website")} />
       </label>
       {state === "error" && <p className="notice notice--error" role="alert">{error}</p>}
-      <p className="muted small">Nie płacisz teraz. Po potwierdzeniu ryby podamy numer konta do przelewu, albo zapłacisz gotówką przy odbiorze.</p>
+      <p className="muted small">Nie płacisz teraz. Zapłacisz gotówką przy odbiorze albo przelewem, gdy potwierdzimy rybę.</p>
       <button type="submit" className="btn btn--primary" disabled={state === "sending"}>
         {state === "sending" ? "Wysyłanie…" : "Wyślij zgłoszenie"}
       </button>

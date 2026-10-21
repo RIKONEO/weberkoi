@@ -113,7 +113,6 @@ const OFFERS: (typeof schema.offers.$inferInsert)[] = [
 
 async function main() {
   const res = await db.insert(schema.offers).values(OFFERS).onConflictDoNothing().returning({ id: schema.offers.id });
-  await db.insert(schema.settings).values({ key: "shippingPaused", value: false }).onConflictDoNothing();
   console.log(`Dodano ${res.length} ofert.`);
   await sql.end();
 }

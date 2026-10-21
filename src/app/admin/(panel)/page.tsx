@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ENQUIRY_STATUSES, dashboardData, getShippingPaused } from "@/lib/data";
+import { ENQUIRY_STATUSES, dashboardData } from "@/lib/data";
 import { available, formatPLN, sizeLabel } from "@/lib/offers";
 import { StatusPill } from "@/components/admin/StatusPill";
 
@@ -14,7 +14,7 @@ function greeting(now: Date) {
 const shortDay = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("pl-PL", { day: "numeric", month: "short", timeZone: TZ });
 
 export default async function Dashboard() {
-  const [{ status, series, latest, offers }, paused] = await Promise.all([dashboardData(), getShippingPaused()]);
+  const { status, series, latest, offers } = await dashboardData();
   const now = new Date();
   const live = offers.filter((o) => o.published);
   const fishLeft = live.reduce((s, o) => s + available(o), 0);
@@ -43,8 +43,6 @@ export default async function Dashboard() {
           <Link href="/admin/oferty/nowa" className="btn btn--primary">+ Dodaj ofertę</Link>
         </div>
       </header>
-
-      {paused && <p className="notice notice--warn">Wysyłki kurierem są wstrzymane. <Link href="/admin/ustawienia">Zmień w ustawieniach</Link></p>}
 
       <section className="kpis" aria-label="Najważniejsze liczby">
         <Link href="/admin/zapytania?status=nowe" className="kpi kpi--hi"><span>Nowe zgłoszenia</span><b className="num">{status.nowe ?? 0}</b><small>do odpisania</small></Link>

@@ -13,7 +13,6 @@ import {
   saveOffer,
   setEnquiryStatus,
   setOfferFlag,
-  setShippingPaused,
 } from "@/lib/data";
 import { parseOfferForm } from "@/lib/offerForm";
 
@@ -87,11 +86,4 @@ export async function setEnquiryStatusAction(form: FormData) {
   const status = String(form.get("status") ?? "") as EnquiryStatus;
   if (status in ENQUIRY_STATUSES) await setEnquiryStatus(Number(form.get("id")), status);
   revalidatePath("/admin/zapytania");
-}
-
-export async function setShippingPausedAction(form: FormData) {
-  await requireAdmin();
-  await setShippingPaused(form.get("paused") === "on");
-  refreshShop();
-  redirect("/admin/ustawienia?zapisano=1");
 }
