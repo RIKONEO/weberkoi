@@ -5,7 +5,7 @@ import { db, schema } from "@/db";
 import type { Offer, Variety } from "./offers";
 import type { Enquiry } from "./enquiry";
 
-const { offers, orderItems, enquiries, enquiryScreenshots, settings } = schema;
+const { offers, orderItems, enquiries, enquiryScreenshots } = schema;
 type OfferRow = typeof offers.$inferSelect;
 
 function toOffer(r: OfferRow): Offer {
@@ -38,15 +38,6 @@ export async function listOffers({ includeHidden = false } = {}): Promise<Offer[
 export async function getOffer(id: string, { includeHidden = false } = {}): Promise<Offer | undefined> {
   const [r] = await db.select().from(offers).where(eq(offers.id, id));
   return r && (includeHidden || r.published) ? toOffer(r) : undefined;
-}
-
-export async function getShippingPaused(): Promise<boolean> {
-  const [r] = await db.select().from(settings).where(eq(settings.key, "shippingPaused"));
-  return r?.value === true;
-}
-
-export async function setShippingPaused(on: boolean) {
-  await db.insert(settings).values({ key: "shippingPaused", value: on }).onConflictDoUpdate({ target: settings.key, set: { value: on } });
 }
 
 export async function createEnquiry(e: Enquiry, screenshots: { mime: string; data: Buffer }[]) {

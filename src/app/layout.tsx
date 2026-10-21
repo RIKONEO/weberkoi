@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: { default: "WEBER Nishikigoi · sklep z koi", template: "%s · WEBER Nishikigoi" },
-  description: "Karpie koi z Japonii i z naszej hodowli. Każda ryba na filmiku, wysyłka kurierem lub odbiór osobisty.",
+  description: "Karpie koi z Japonii i z naszej hodowli. Każda ryba na filmiku, odbiór osobisty w Zakrzewie.",
   icons: { icon: "/logo-320.jpg" },
 };
 
