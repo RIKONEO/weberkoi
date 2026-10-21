@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CONTACT } from "@/lib/contact";
 
 export function SiteFooter() {
   return (
@@ -8,7 +9,9 @@ export function SiteFooter() {
         <nav aria-label="Informacje">
           <Link href="/wysylka-i-odbior">Wysyłka i odbiór</Link>
           <Link href="/kontakt">Kontakt</Link>
-          <a href="https://www.facebook.com/profile.php?id=61574920259547" target="_blank" rel="noreferrer">
+          <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>
+          <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
+          <a href={CONTACT.facebook} target="_blank" rel="noreferrer">
             Facebook
           </a>
         </nav>

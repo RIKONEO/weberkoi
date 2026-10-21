@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DELIVERY, formatDay, nextDays, SHIPPING_WEEKDAYS } from "@/lib/shipping";
 import { formatPLN } from "@/lib/offers";
 import { getShippingPaused } from "@/lib/data";
+import { CONTACT } from "@/lib/contact";
 
 export const metadata: Metadata = { title: "Wysyłka i odbiór" };
 export const dynamic = "force-dynamic";
@@ -23,8 +24,10 @@ export default async function ShippingPage() {
       )}
       <p>W upały i mrozy wstrzymujemy wysyłki, żeby ryby nie ucierpiały. Wtedy zapraszamy po odbiór osobisty.</p>
       <h2>Odbiór osobisty</h2>
-      <p>{DELIVERY.odbior.note}. Termin ustalimy z Tobą po zgłoszeniu. Na miejscu możesz zapłacić gotówką.</p>
-      <p className="notice notice--warn">Adres, godziny i koszt kuriera są przykładowe. Uzupełnimy je Waszymi danymi.</p>
+      <p>
+        Zapraszamy na {DELIVERY.odbior.note}. Termin odbioru ustalimy z Tobą po zgłoszeniu albo telefonicznie pod numerem{" "}
+        <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>. Na miejscu możesz zapłacić gotówką.
+      </p>
     </div>
   );
 }
