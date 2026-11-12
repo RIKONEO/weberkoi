@@ -54,7 +54,8 @@ const clock = (sec: number) => {
 };
 
 /** Sprawdza, czy Bunny skończył przerabiać filmik, i podaje gotowe adresy MP4 i miniatury. */
-export async function getVideoState(videoId: string): Promise<VideoState> {
+/** `referer`: adres sklepu, żeby Bunny z listą dozwolonych domen wpuścił też to sprawdzenie. */
+export async function getVideoState(videoId: string, referer?: string): Promise<VideoState> {
   const c = config();
   if (!c) return { state: "error", message: "Brak ustawień Bunny Stream." };
   if (!/^[0-9a-f-]{36}$/i.test(videoId)) return { state: "error", message: "Zły numer filmiku." };
@@ -79,13 +80,13 @@ export async function getVideoState(videoId: string): Promise<VideoState> {
   const res720 = [720, 480, 360, 240].find((r) => have.includes(r)) ?? 720;
   const base = `https://${c.cdnHost}/${videoId}`;
   const videoUrl = `${base}/play_${res720}p.mp4`;
-  const head = await fetch(videoUrl, { method: "HEAD", cache: "no-store" }).catch(() => null);
+  const head = await fetch(videoUrl, { method: "HEAD", cache: "no-store", headers: referer ? { Referer: referer } : {} }).catch(() => null);
   if (head && (head.status === 404 || head.status === 403)) {
     return {
       state: "error",
       message: head.status === 404
-        ? "Filmik jest gotowy, ale Bunny nie zrobił pliku MP4. Włącz „MP4 Fallback” w ustawieniach biblioteki i wgraj filmik jeszcze raz."
-        : "Bunny blokuje dostęp do filmiku. Wyłącz ochronę tokenem albo dodaj adres sklepu do dozwolonych domen.",
+        ? "Filmik jest gotowy, ale Bunny nie zrobił pliku MP4. W Bunny: Stream → biblioteka → Encoding → włącz „MP4 Fallback”, potem wgraj filmik jeszcze raz (działa tylko dla filmików wgranych po włączeniu)."
+        : "Bunny blokuje dostęp do pliku filmiku (błąd 403). W Bunny: Stream → biblioteka → Security: wyłącz „Block direct URL file access” i „Token authentication”, a „Allowed domains” zostaw puste albo dopisz weberkoisklep.vercel.app. Potem kliknij „Sprawdź jeszcze raz”, nie trzeba wgrywać od nowa.",
     };
   }
   return {

@@ -35,6 +35,8 @@ export function VideoField({
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const box = useRef<HTMLFieldSetElement>(null);
   const upload = useRef<Upload | null>(null);
+  // Ostatnio wgrany filmik: po poprawieniu ustawień w Bunny można go sprawdzić ponownie bez wgrywania.
+  const [lastVideoId, setLastVideoId] = useState<string | null>(null);
   const busy = phase.kind === "uploading" || phase.kind === "processing";
 
   // Nie da się zapisać oferty, zanim filmik będzie gotowy, i ostrzegamy przed zamknięciem strony.
@@ -56,6 +58,7 @@ export function VideoField({
   }, [phase.kind]);
 
   async function waitForBunny(videoId: string) {
+    setLastVideoId(videoId);
     setPhase({ kind: "processing", progress: 0 });
     for (let i = 0; i < 400; i++) {
       await new Promise((r) => setTimeout(r, i < 5 ? 3000 : 6000));
@@ -165,7 +168,16 @@ export function VideoField({
           )}
 
           {phase.kind === "ready" && <p className="small video-upload__ok">Filmik gotowy. Zapisz ofertę na dole, żeby pokazać go w sklepie.</p>}
-          {phase.kind === "error" && <p className="small video-upload__err" role="alert">{phase.message}</p>}
+          {phase.kind === "error" && (
+            <>
+              <p className="small video-upload__err" role="alert">{phase.message}</p>
+              {lastVideoId && (
+                <button type="button" className="btn video-upload__retry" onClick={() => void waitForBunny(lastVideoId)}>
+                  Sprawdź jeszcze raz
+                </button>
+              )}
+            </>
+          )}
         </div>
       ) : (
         <p className="muted small">Wgrywanie z telefonu włączy się, gdy w Vercelu będą ustawione klucze Bunny Stream. Na razie wklej link do pliku MP4.</p>

@@ -307,3 +307,4 @@ a.kpi:hover { border-color: var(--paper-2); }
 .video-upload__err { margin: 0; color: var(--err); }
 .video-upload__manual summary { cursor: pointer; margin-bottom: 8px; }
 .video-upload__fields { display: flex; flex-direction: column; gap: 10px; }
+.video-upload__retry { align-self: flex-start; }
