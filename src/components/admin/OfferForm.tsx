@@ -1,5 +1,7 @@
 import { type Offer, VARIETIES } from "@/lib/offers";
 import { saveOfferAction } from "@/app/admin/actions";
+import { bunnyConfigured } from "@/lib/bunny";
+import { VideoField } from "./VideoField";
 
 /** Formularz dodawania i edycji oferty; bez `offer` tworzy nową. */
 export function OfferForm({ offer }: { offer?: Offer }) {
@@ -32,14 +34,7 @@ export function OfferForm({ offer }: { offer?: Offer }) {
         <label className="field">Wiek<input id="age" name="age" defaultValue={offer?.age} placeholder="Tosai (2024)" /></label>
       </div>
       <label className="field">Opis<textarea id="description" name="description" rows={3} defaultValue={offer?.description} /></label>
-      <fieldset>
-        <legend>Filmik</legend>
-        <label className="field">Adres filmiku (https://…)<input id="videoUrl" name="videoUrl" defaultValue={offer?.videoUrl} placeholder="link do pliku MP4, np. z Bunny Stream" /></label>
-        <div className="two">
-          <label className="field">Miniatura (https://…, opcjonalnie)<input id="posterUrl" name="posterUrl" defaultValue={offer?.posterUrl} /></label>
-          <label className="field">Długość<input id="videoLength" name="videoLength" defaultValue={offer?.videoLength} placeholder="1:48" /></label>
-        </div>
-      </fieldset>
+      <VideoField videoUrl={offer?.videoUrl} posterUrl={offer?.posterUrl} videoLength={offer?.videoLength} uploadEnabled={bunnyConfigured()} />
       <fieldset>
         <legend>Sprzedane</legend>
         <div className="two">
