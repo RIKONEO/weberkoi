@@ -4,6 +4,7 @@ import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { type Offer, available } from "@/lib/offers";
 import { MAX_SCREENSHOTS } from "@/lib/enquiry";
 import { FishMarker } from "./FishMarker";
+import { CONTACT } from "@/lib/contact";
 
 type Shot = { file: Blob; name: string; url: string };
 /** Obrazek czekający na zaznaczenie ryby kółkiem. */
@@ -98,15 +99,23 @@ export function OfferEnquiry({ offer, frameGrab = false, ref }: { offer: Offer; 
     body.set("qty", String(qty));
     for (const [k, v] of Object.entries(form)) body.set(k, v);
     shots.forEach((s, i) => body.append("screenshot", s.file, `screenshot-${i + 1}.jpg`));
+    let res: Response;
     try {
-      const res = await fetch("/api/zapytania", { method: "POST", body });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? "Nie udało się wysłać zgłoszenia.");
-      setState("sent");
-    } catch (err) {
+      res = await fetch("/api/zapytania", { method: "POST", body });
+    } catch {
       setState("error");
-      setError(err instanceof Error ? err.message : "Nie udało się wysłać zgłoszenia.");
+      setError("Brak połączenia z internetem. Sprawdź zasięg i wyślij jeszcze raz.");
+      return;
     }
+    if (res.ok) return setState("sent");
+    const data = await res.json().catch(() => ({}));
+    setState("error");
+    setError(
+      data.error ??
+        (res.status === 413
+          ? "Zdjęcia są za duże. Usuń jedno z nich albo zrób stopklatkę jeszcze raz."
+          : `Nie udało się wysłać zgłoszenia (błąd ${res.status}). Spróbuj jeszcze raz albo zadzwoń: ${CONTACT.phone}.`),
+    );
   }
 
   if (state === "sent") {
