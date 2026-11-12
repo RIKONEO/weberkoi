@@ -31,6 +31,8 @@ export type Offer = {
   addedAt: string;
 };
 
+/** Stopklatka z rybą, którą ktoś już wybrał z filmiku; pokazujemy ją pod filmikiem. */
+export type TakenFish = { shot: number; fish: "zarezerwowana" | "sprzedana" };
 
 export const SIZE_FILTERS = [
   { id: "do-20", label: "do 20 cm", test: (o: Offer) => o.sizeCm[1] <= 20 },

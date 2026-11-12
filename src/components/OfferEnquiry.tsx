@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
-import { type Offer, available } from "@/lib/offers";
+import { type Offer, type TakenFish, available } from "@/lib/offers";
 import { MAX_SCREENSHOTS } from "@/lib/enquiry";
 import { FishMarker } from "./FishMarker";
+import { TakenThumbs } from "./TakenFish";
 import { CONTACT } from "@/lib/contact";
 
 type Shot = { file: Blob; name: string; url: string };
@@ -32,7 +33,18 @@ async function shrink(file: File): Promise<Blob> {
   }
 }
 
-export function OfferEnquiry({ offer, frameGrab = false, ref }: { offer: Offer; frameGrab?: boolean; ref?: React.Ref<EnquiryHandle> }) {
+export function OfferEnquiry({
+  offer,
+  taken = [],
+  frameGrab = false,
+  ref,
+}: {
+  offer: Offer;
+  /** Ryby z tego filmiku już zarezerwowane albo sprzedane. */
+  taken?: TakenFish[];
+  frameGrab?: boolean;
+  ref?: React.Ref<EnquiryHandle>;
+}) {
   const left = available(offer);
   const input = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -42,6 +54,8 @@ export function OfferEnquiry({ offer, frameGrab = false, ref }: { offer: Offer; 
   const [form, setForm] = useState({ name: "", phone: "", email: "", second: "", message: "", website: "" });
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState("");
+  const [checked, setChecked] = useState(false);
+  const mustCheck = taken.length > 0 && shots.length > 0;
 
   const urls = useRef<string[]>([]);
   const nextId = useRef(0);
@@ -90,6 +104,11 @@ export function OfferEnquiry({ offer, frameGrab = false, ref }: { offer: Offer; 
     if (!shots.length) {
       setState("error");
       setError(frameGrab ? "Zrób stopklatkę albo dodaj screenshot z filmiku, na którym widać rybę." : "Dodaj screenshot z filmiku, na którym widać rybę.");
+      return;
+    }
+    if (mustCheck && !checked) {
+      setState("error");
+      setError("Sprawdź, czy Twojej ryby nie ma wśród już wybranych, i zaznacz pole pod nimi.");
       return;
     }
     setState("sending");
@@ -157,6 +176,18 @@ export function OfferEnquiry({ offer, frameGrab = false, ref }: { offer: Offer; 
           </label>
         )}
       </div>
+
+      {mustCheck && (
+        <div className="notice notice--warn taken-check">
+          <b>Sprawdź, czy Twojej ryby nie ma wśród tych.</b>
+          <span className="small">Te ryby z filmiku ktoś już wybrał. Porównaj je ze swoją stopklatką.</span>
+          <TakenThumbs taken={taken} small />
+          <label className="check small">
+            <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} />
+            Sprawdziłem/am, mojej ryby tu nie ma
+          </label>
+        </div>
+      )}
 
       <div className="two">
         <label className="field">
