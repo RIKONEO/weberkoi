@@ -35,13 +35,13 @@ export function OfferPicker({ offer, details }: { offer: Offer; details: React.R
       return;
     }
     v.pause();
-    const scale = Math.min(1, 1600 / Math.max(v.videoWidth, v.videoHeight));
+    const scale = Math.min(1, 1280 / Math.max(v.videoWidth, v.videoHeight));
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(v.videoWidth * scale);
     canvas.height = Math.round(v.videoHeight * scale);
     try {
       canvas.getContext("2d")!.drawImage(v, 0, 0, canvas.width, canvas.height);
-      const frame = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.9));
+      const frame = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.85));
       if (!frame) throw new Error("brak klatki");
       setNote(enquiry.current?.addFrame(frame, clock(v.currentTime)) ? "" : "Masz już komplet zdjęć w zgłoszeniu. Usuń któreś, żeby dodać nowe.");
     } catch {

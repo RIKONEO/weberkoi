@@ -31,7 +31,7 @@ async function drawMark(image: Blob, mark: Mark, r: number): Promise<Blob> {
   ctx.lineWidth = line;
   ctx.strokeStyle = "#ffd60a";
   ctx.stroke();
-  const out = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.88));
+  const out = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.85));
   return out ?? image;
 }
 
