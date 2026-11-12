@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import sharp from "sharp";
 import { createEnquiry, getOffer } from "@/lib/data";
 import { parseEnquiry } from "@/lib/enquiry";
 import { CONTACT } from "@/lib/contact";
@@ -22,6 +21,9 @@ function looksLikeImage(b: Buffer) {
 async function normalize(file: File): Promise<{ mime: string; data: Buffer } | null> {
   const input = Buffer.from(await file.arrayBuffer());
   try {
+    // Ładowany dopiero tutaj: gdyby natywna biblioteka sharp nie wczytała się na serwerze, przy imporcie
+    // na górze pliku padałaby cała trasa (goły błąd 500), a tak zgłoszenie i tak się zapisze.
+    const { default: sharp } = await import("sharp");
     const data = await sharp(input)
       .rotate()
       .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
