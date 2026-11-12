@@ -284,3 +284,20 @@ a.kpi:hover { border-color: var(--paper-2); }
   .dash__hello { align-items: stretch; }
   .stock__track { width: 56px; }
 }
+
+/* Wgrywanie filmiku oferty z telefonu (panel admina). */
+.video-upload { display: flex; flex-direction: column; gap: 10px; }
+.video-upload__preview { width: 100%; max-height: 320px; border-radius: 10px; background: #000; }
+.video-upload__pick { width: 100%; padding: 14px 20px; font-size: 15px; }
+@media (min-width: 640px) { .video-upload__pick { width: auto; align-self: flex-start; } }
+.video-upload__status { display: flex; flex-direction: column; gap: 8px; background: var(--ink-3); border-radius: 10px; padding: 12px; }
+.video-upload__status p { margin: 0; }
+.video-upload__status .link-btn { align-self: flex-start; }
+.video-upload__bar { height: 10px; border-radius: 999px; background: var(--ink); overflow: hidden; }
+.video-upload__bar span { display: block; height: 100%; min-width: 4%; border-radius: 999px; background: var(--hi); transition: width 0.3s ease; }
+.video-upload__bar span.is-processing { background: var(--ok); animation: video-upload-pulse 1.4s ease-in-out infinite; }
+@keyframes video-upload-pulse { 50% { opacity: 0.55; } }
+.video-upload__ok { margin: 0; color: var(--ok); }
+.video-upload__err { margin: 0; color: var(--err); }
+.video-upload__manual summary { cursor: pointer; margin-bottom: 8px; }
+.video-upload__fields { display: flex; flex-direction: column; gap: 10px; }
