@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getOffer } from "@/lib/data";
+import { getOffer, listVarieties } from "@/lib/data";
 import { OfferForm } from "@/components/admin/OfferForm";
 import { Flash } from "@/components/admin/Flash";
 import { deleteOfferAction } from "../../../actions";
@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Edycja oferty" };
 
 export default async function EditOfferPage({ params, searchParams }: Props) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  const offer = await getOffer(id, { includeHidden: true });
+  const [offer, varieties] = await Promise.all([getOffer(id, { includeHidden: true }), listVarieties()]);
   if (!offer) notFound();
   return (
     <div className="stack admin-narrow">
@@ -22,7 +22,7 @@ export default async function EditOfferPage({ params, searchParams }: Props) {
         {offer.published && <Link href={`/oferta/${offer.id}`} target="_blank" className="btn">Zobacz w sklepie ↗</Link>}
       </div>
       <Flash saved={sp.zapisano} error={sp.blad} />
-      <OfferForm offer={offer} />
+      <OfferForm offer={offer} varieties={varieties} />
       <form action={deleteOfferAction} className="row">
         <input type="hidden" name="id" value={offer.id} />
         <button type="submit" className="link-btn small">Usuń ofertę</button>
