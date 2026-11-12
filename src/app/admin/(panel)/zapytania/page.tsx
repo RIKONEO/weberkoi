@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ENQUIRY_STATUSES, type EnquiryStatus, listEnquiries } from "@/lib/data";
-import { setEnquiryStatusAction } from "../../actions";
+import { ENQUIRY_STATUSES, FISH_STATES, type EnquiryStatus, listEnquiries } from "@/lib/data";
+import { setEnquiryFishAction, setEnquiryStatusAction } from "../../actions";
 import { StatusPill } from "@/components/admin/StatusPill";
 
 export const metadata: Metadata = { title: "Zgłoszenia" };
@@ -14,6 +14,7 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
     <div className="stack">
       <h1 className="page-title">Zgłoszenia</h1>
       <p className="muted small">Klient wysyła screenshot z filmiku z rybą, którą chce. Skontaktuj się z nim, podaj cenę i numer konta albo umów odbiór z gotówką, potem zmień status.</p>
+      <p className="muted small">Ryba z nowego zgłoszenia od razu pokazuje się pod filmikiem jako <b>zarezerwowana</b>. Po sprzedaży kliknij „Sprzedana”, a jeśli klient zrezygnuje albo zdjęcie nie nadaje się do pokazania, kliknij „Wolna”: zniknie ze strony.</p>
       <div className="row">
         <Link className="chip" aria-pressed={!current} href="/admin/zapytania">Wszystkie</Link>
         {Object.entries(ENQUIRY_STATUSES).map(([k, v]) => (
@@ -49,6 +50,19 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
                 <span className="muted">{e.createdAt.toLocaleString("pl-PL", { dateStyle: "short", timeStyle: "short" })}</span>
               </div>
               {e.message && <p className="quote">{e.message}</p>}
+              <div className="fish-row">
+                <span className="small">Ryba: <FishPill fish={e.fish} /></span>
+                {Object.entries(FISH_STATES).filter(([k]) => k !== e.fish).map(([k, v]) => (
+                  <form key={k} action={setEnquiryFishAction}>
+                    <input type="hidden" name="id" value={e.id} />
+                    <input type="hidden" name="offerId" value={e.offerId} />
+                    <input type="hidden" name="fish" value={k} />
+                    <button type="submit" className={k === "sprzedana" ? "btn btn--primary btn--sm" : "chip"}>
+                      {k === "wolna" ? "Wolna (ukryj ze strony)" : v}
+                    </button>
+                  </form>
+                ))}
+              </div>
               <div className="row">
                 {Object.entries(ENQUIRY_STATUSES).filter(([k]) => k !== e.status).map(([k, v]) => (
                   <form key={k} action={setEnquiryStatusAction}>
@@ -66,4 +80,11 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
       )}
     </div>
   );
+}
+
+const FISH_TONE: Record<string, string> = { zarezerwowana: "warn", sprzedana: "hi", wolna: "mu" };
+const FISH_LABELS: Record<string, string> = FISH_STATES;
+
+function FishPill({ fish }: { fish: string }) {
+  return <span className={`pill pill--${FISH_TONE[fish] ?? "mu"}`}>{FISH_LABELS[fish] ?? fish}</span>;
 }

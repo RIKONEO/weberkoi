@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { type Offer, available } from "@/lib/offers";
+import { type Offer, type TakenFish, available } from "@/lib/offers";
 import { OfferVideo } from "./OfferVideo";
 import { OfferEnquiry, type EnquiryHandle } from "./OfferEnquiry";
+import { TakenGallery } from "./TakenFish";
 
 function clock(t: number) {
   const s = Math.floor(t);
@@ -14,7 +15,7 @@ function clock(t: number) {
  * Filmik oferty z przyciskiem „Zrób stopklatkę” i formularzem zgłoszenia obok. Stopklatka trafia
  * prosto do formularza, więc klient nie musi robić i wgrywać zrzutu ekranu.
  */
-export function OfferPicker({ offer, details }: { offer: Offer; details: React.ReactNode }) {
+export function OfferPicker({ offer, taken, details }: { offer: Offer; taken: TakenFish[]; details: React.ReactNode }) {
   const video = useRef<HTMLVideoElement>(null);
   const enquiry = useRef<EnquiryHandle>(null);
   // Klatkę da się odczytać tylko, gdy serwer z filmikami pozwala (CORS). Jeśli nie pozwala,
@@ -71,10 +72,11 @@ export function OfferPicker({ offer, details }: { offer: Offer; details: React.R
             ? "Podoba Ci się ryba? Zatrzymaj filmik, kliknij „Zrób stopklatkę” i stuknij w rybę."
             : "Podoba Ci się ryba? Zatrzymaj filmik, zrób screenshot i wyślij go nam w formularzu obok."}
         </p>
+        <TakenGallery taken={taken} />
       </div>
       <div className="stack">
         {details}
-        <OfferEnquiry offer={offer} frameGrab={canGrab} ref={enquiry} />
+        <OfferEnquiry offer={offer} taken={taken} frameGrab={canGrab} ref={enquiry} />
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 // Dostęp do bazy dla sklepu i panelu. Tylko po stronie serwera.
 import "server-only";
-import { asc, desc, eq, gte, inArray, sql as dsql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, sql as dsql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import type { Offer } from "./offers";
+import type { Offer, TakenFish } from "./offers";
 import type { Enquiry } from "./enquiry";
 
 const { offers, orderItems, enquiries, enquiryScreenshots, varieties } = schema;
@@ -75,6 +75,51 @@ export async function listEnquiries(status?: EnquiryStatus) {
 
 export async function getScreenshot(id: number) {
   const [r] = await db.select({ mime: enquiryScreenshots.mime, data: enquiryScreenshots.data }).from(enquiryScreenshots).where(eq(enquiryScreenshots.id, id));
+  return r;
+}
+
+export const FISH_STATES = { zarezerwowana: "Zarezerwowana", sprzedana: "Sprzedana", wolna: "Wolna" } as const;
+export type FishState = keyof typeof FISH_STATES;
+const TAKEN: FishState[] = ["zarezerwowana", "sprzedana"];
+
+/**
+ * Zmienia stan ryby ze zgłoszenia. Przy „sprzedana” odejmujemy ryby od dostępnych w ofercie
+ * (pole groupSold), a gdy Marcin cofnie sprzedaż, oddajemy je z powrotem.
+ */
+export async function setEnquiryFish(id: number, fish: FishState) {
+  await db.transaction(async (tx) => {
+    const [e] = await tx.select({ fish: enquiries.fish, qty: enquiries.qty, offerId: enquiries.offerId }).from(enquiries).where(eq(enquiries.id, id)).for("update");
+    if (!e || e.fish === fish) return;
+    const delta = (fish === "sprzedana" ? e.qty : 0) - (e.fish === "sprzedana" ? e.qty : 0);
+    await tx.update(enquiries).set({ fish }).where(eq(enquiries.id, id));
+    if (delta) {
+      await tx
+        .update(offers)
+        .set({ groupSold: dsql`greatest(0, least(${offers.count} - cardinality(${offers.sold}), ${offers.groupSold} + ${delta}))` })
+        .where(eq(offers.id, e.offerId));
+    }
+  });
+}
+
+/** Stopklatki ryb zarezerwowanych i sprzedanych z danej oferty, najpierw najnowsze. */
+export async function listTakenFish(offerId: string): Promise<TakenFish[]> {
+  const rows = await db
+    .select({ shot: enquiryScreenshots.id, fish: enquiries.fish })
+    .from(enquiryScreenshots)
+    .innerJoin(enquiries, eq(enquiries.id, enquiryScreenshots.enquiryId))
+    .where(and(eq(enquiries.offerId, offerId), inArray(enquiries.fish, TAKEN)))
+    .orderBy(desc(enquiries.createdAt), asc(enquiryScreenshots.id));
+  return rows as TakenFish[];
+}
+
+/** Stopklatka dla wszystkich, ale tylko gdy ryba jest zarezerwowana albo sprzedana, a oferta widoczna. */
+export async function getPublicScreenshot(id: number) {
+  const [r] = await db
+    .select({ mime: enquiryScreenshots.mime, data: enquiryScreenshots.data })
+    .from(enquiryScreenshots)
+    .innerJoin(enquiries, eq(enquiries.id, enquiryScreenshots.enquiryId))
+    .innerJoin(offers, eq(offers.id, enquiries.offerId))
+    .where(and(eq(enquiryScreenshots.id, id), inArray(enquiries.fish, TAKEN), eq(offers.published, true)));
   return r;
 }
 

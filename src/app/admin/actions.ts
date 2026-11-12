@@ -7,6 +7,8 @@ import { SESSION_COOKIE, SESSION_DAYS, checkPassword, createSessionToken, verify
 import {
   ENQUIRY_STATUSES,
   type EnquiryStatus,
+  FISH_STATES,
+  type FishState,
   addVariety,
   deleteOffer,
   deleteVariety,
@@ -16,6 +18,7 @@ import {
   offerHasOrders,
   renameVariety,
   saveOffer,
+  setEnquiryFish,
   setEnquiryStatus,
   setOfferFlag,
 } from "@/lib/data";
@@ -91,6 +94,17 @@ export async function setEnquiryStatusAction(form: FormData) {
   const status = String(form.get("status") ?? "") as EnquiryStatus;
   if (status in ENQUIRY_STATUSES) await setEnquiryStatus(Number(form.get("id")), status);
   revalidatePath("/admin/zapytania");
+}
+
+/** „Sprzedana”, „Zarezerwowana” albo „Wolna” przy zgłoszeniu; od tego zależy galeria pod filmikiem. */
+export async function setEnquiryFishAction(form: FormData) {
+  await requireAdmin();
+  const fish = String(form.get("fish") ?? "") as FishState;
+  if (!(fish in FISH_STATES)) return;
+  await setEnquiryFish(Number(form.get("id")), fish);
+  refreshShop(String(form.get("offerId") ?? "") || undefined);
+  revalidatePath("/admin/zapytania");
+  revalidatePath("/admin");
 }
 
 // --- odmiany ---

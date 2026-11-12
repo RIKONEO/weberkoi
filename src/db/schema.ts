@@ -81,6 +81,11 @@ export const enquiries = pgTable("enquiries", {
   phone: text("phone").notNull().default(""),
   message: text("message").notNull().default(""),
   status: text("status").notNull().default("nowe"),
+  /**
+   * Co z rybą ze stopklatki: „zarezerwowana” i „sprzedana” pokazujemy pod filmikiem, żeby następny
+   * klient nie wybrał tej samej; „wolna” nie pokazujemy nigdzie.
+   */
+  fish: text("fish").notNull().default("zarezerwowana"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OfferPicker } from "@/components/OfferPicker";
-import { getOffer } from "@/lib/data";
+import { getOffer, listTakenFish } from "@/lib/data";
 import { available, formatPLN, sizeLabel } from "@/lib/offers";
 
 type Props = { params: Promise<{ id: string }> };
@@ -17,11 +17,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function OfferPage({ params }: Props) {
   const offer = await getOffer((await params).id);
   if (!offer) notFound();
+  const taken = await listTakenFish(offer.id);
   return (
     <div className="wrap section">
       <Link href="/katalog" className="back">← Wróć do katalogu</Link>
       <OfferPicker
         offer={offer}
+        taken={taken}
         details={
           <>
             <div>
