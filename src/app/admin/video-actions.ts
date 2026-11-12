@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { requireAdmin } from "./actions";
 import { BUNNY_TUS_ENDPOINT, type UploadTicket, type VideoState, createUploadTicket, getVideoState } from "@/lib/bunny";
 
@@ -14,5 +15,8 @@ export async function startVideoUpload(title: string): Promise<({ ok: true; endp
 
 export async function checkVideo(videoId: string): Promise<VideoState> {
   await requireAdmin();
-  return getVideoState(videoId);
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  return getVideoState(videoId, host ? `${proto}://${host}/` : undefined);
 }
