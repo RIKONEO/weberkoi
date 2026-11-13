@@ -30,7 +30,14 @@ export function OfferVideo({
           onError={onError}
           poster={offer.posterUrl}
           controls={controls}
-          muted={!controls}
+          // Filmiki w sklepie są zawsze bez dźwięku. Przycisk głośności jest ukryty w CSS,
+          // a gdyby ktoś mimo to włączył dźwięk (np. skrótem lub menu), od razu go wyciszamy.
+          muted
+          controlsList="nodownload noremoteplayback"
+          disablePictureInPicture
+          onVolumeChange={(e) => {
+            if (!e.currentTarget.muted) e.currentTarget.muted = true;
+          }}
           playsInline
           preload="metadata"
         />

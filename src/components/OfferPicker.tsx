@@ -11,6 +11,48 @@ function clock(t: number) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/** Czeka na pierwszą wyświetloną klatkę filmiku (albo na upływ czasu). */
+function nextFrame(v: HTMLVideoElement, timeoutMs: number) {
+  return new Promise<boolean>((resolve) => {
+    let done = false;
+    const finish = (ok: boolean) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      v.removeEventListener("timeupdate", onTime);
+      resolve(ok);
+    };
+    const timer = setTimeout(() => finish(v.readyState >= 2), timeoutMs);
+    const start = v.currentTime;
+    // Przeglądarki bez requestVideoFrameCallback: wystarczy, że czas filmiku ruszył.
+    const onTime = () => v.currentTime !== start && v.readyState >= 2 && finish(true);
+    if (typeof v.requestVideoFrameCallback === "function") v.requestVideoFrameCallback(() => finish(true));
+    else (v as HTMLVideoElement).addEventListener("timeupdate", onTime);
+  });
+}
+
+/**
+ * Upewnia się, że filmik ma zdekodowaną klatkę do skopiowania. Jeśli klient jeszcze go nie włączył
+ * (przeglądarka ma wtedy tylko okładkę, a kopia klatki wychodzi czarna), puszczamy go na chwilę
+ * bez dźwięku i zatrzymujemy na pierwszej klatce.
+ */
+async function ensureFrame(v: HTMLVideoElement) {
+  if (v.readyState >= 2 && v.played.length > 0 && v.videoWidth) {
+    v.pause();
+    return true;
+  }
+  v.muted = true;
+  const ready = nextFrame(v, 6000);
+  try {
+    await v.play();
+  } catch {
+    // Odtwarzanie zablokowane: spróbujemy jeszcze, jeśli klatka i tak się wczyta.
+  }
+  const ok = await ready;
+  v.pause();
+  return ok && v.videoWidth > 0;
+}
+
 /**
  * Filmik oferty z przyciskiem „Zrób stopklatkę” i formularzem zgłoszenia obok. Stopklatka trafia
  * prosto do formularza, więc klient nie musi robić i wgrywać zrzutu ekranu.
@@ -22,6 +64,7 @@ export function OfferPicker({ offer, taken, details }: { offer: Offer; taken: Ta
   // wczytujemy filmik zwyczajnie i zostaje sam screenshot.
   const [cors, setCors] = useState(true);
   const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
   // Błąd wczytania mógł się zdarzyć, zanim React podpiął onError.
   useEffect(() => {
     if (cors && video.current?.error) setCors(false);
@@ -30,12 +73,20 @@ export function OfferPicker({ offer, taken, details }: { offer: Offer; taken: Ta
 
   async function grab() {
     const v = video.current;
-    if (!v) return;
-    if (!v.videoWidth) {
-      setNote("Najpierw włącz filmik i zatrzymaj go na rybie.");
-      return;
+    if (!v || busy) return;
+    setBusy(true);
+    try {
+      if (!(await ensureFrame(v))) {
+        setNote("Filmik jeszcze się wczytuje. Włącz go na chwilę i kliknij „Zrób stopklatkę” jeszcze raz.");
+        return;
+      }
+      await capture(v);
+    } finally {
+      setBusy(false);
     }
-    v.pause();
+  }
+
+  async function capture(v: HTMLVideoElement) {
     const scale = Math.min(1, 1280 / Math.max(v.videoWidth, v.videoHeight));
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(v.videoWidth * scale);
@@ -62,8 +113,8 @@ export function OfferPicker({ offer, taken, details }: { offer: Offer; taken: Ta
           onError={() => cors && setCors(false)}
         />
         {canGrab && (
-          <button type="button" className="btn btn--primary grab" onClick={grab}>
-            Zrób stopklatkę
+          <button type="button" className="btn btn--primary grab" onClick={grab} disabled={busy}>
+            {busy ? "Robię stopklatkę…" : "Zrób stopklatkę"}
           </button>
         )}
         {note && <p className="notice notice--warn small" role="status">{note}</p>}

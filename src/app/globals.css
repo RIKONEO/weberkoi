@@ -119,6 +119,10 @@ legend { font-family: var(--display); font-size: 22px; margin-bottom: 8px; paddi
 /* filmik */
 .video { position: relative; aspect-ratio: 16 / 10; max-width: 100%; border-radius: 10px; overflow: hidden; background: #1d3b3c; }
 .video video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Filmiki są bez dźwięku: chowamy przycisk i suwak głośności (Chrome, Edge, Safari). */
+.video video::-webkit-media-controls-mute-button,
+.video video::-webkit-media-controls-volume-slider,
+.video video::-webkit-media-controls-volume-control-container { display: none !important; }
 .video__placeholder { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; color: rgba(239, 230, 210, 0.7); font-size: 12px; background: radial-gradient(ellipse at 30% 30%, #2a5553, #13292a 75%); }
 .video__placeholder svg { width: clamp(64px, 14vw, 150px); fill: var(--koi, #f3eee4); opacity: 0.85; filter: drop-shadow(6px 8px 6px rgba(0, 0, 0, 0.35)); }
 .video[data-variety="Kohaku"], .video[data-variety="Taisho Sanke"], .video[data-variety="Tancho"] { --koi: #f3eee4; }
