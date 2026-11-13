@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ENQUIRY_STATUSES, dashboardData } from "@/lib/data";
-import { available, formatPLN, sizeLabel } from "@/lib/offers";
+import { available, formatPLN, plural, sizeLabel } from "@/lib/offers";
 import { StatusPill } from "@/components/admin/StatusPill";
 
 const OWNER = "Marcin";
@@ -92,21 +92,26 @@ export default async function Dashboard() {
           <div className="dash__head"><h2>Ostatnie zgłoszenia</h2><Link href="/admin/zapytania" className="small">Wszystkie →</Link></div>
           {latest.length ? (
             <ul className="dash__list">
-              {latest.map(({ e, offerTitle, screenshots }) => (
-                <li key={e.id} className="dash__enq">
-                  {screenshots[0] ? (
+              {latest.map(({ key, first: e, items }) => {
+                const shot = items.find((it) => it.screenshots[0])?.screenshots[0];
+                const fish = items.reduce((s, it) => s + it.e.qty, 0);
+                return (
+                <li key={key} className="dash__enq">
+                  {shot ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`/admin/screenshot/${screenshots[0]}`} alt="" loading="lazy" />
+                    <img src={`/admin/screenshot/${shot}`} alt="" loading="lazy" />
                   ) : (
                     <span className="dash__noimg" aria-hidden>—</span>
                   )}
                   <div>
-                    <b>{e.name}</b> <span className="muted small">· {offerTitle ?? e.offerId}</span>
+                    <b>{e.name}</b>{" "}
+                    <span className="muted small">· {items.length > 1 ? `${fish} ${plural(fish, "ryba", "ryby", "ryb")} z koszyka` : items[0].offerTitle ?? e.offerId}</span>
                     <div className="small muted">{e.phone || e.email} · {e.createdAt.toLocaleString("pl-PL", { dateStyle: "short", timeStyle: "short", timeZone: TZ })}</div>
                   </div>
                   <StatusPill status={e.status} />
                 </li>
-              ))}
+                );
+              })}
             </ul>
           ) : (
             <p className="muted small">Nie ma jeszcze zgłoszeń.</p>

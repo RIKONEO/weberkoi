@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useImperativeHandle, useRef, useState } from "react";
 import Link from "next/link";
-import { type Offer, type TakenFish, available } from "@/lib/offers";
-import { MAX_SCREENSHOTS } from "@/lib/enquiry";
+import { type Offer, type TakenFish, available, formatPLN, plural } from "@/lib/offers";
+import { MAX_ITEMS } from "@/lib/enquiry";
 import { FishMarker } from "./FishMarker";
 import { TakenThumbs } from "./TakenFish";
-import { CONTACT } from "@/lib/contact";
+import { useBlobUrl, useCart } from "./cart/CartProvider";
 
-type Shot = { file: Blob; name: string; url: string };
 /** Obrazek czekający na zaznaczenie ryby kółkiem. */
-type Pending = { id: number; file: Blob; name: string; second?: string; fromVideo?: boolean };
+type Pending = { id: number; file: Blob; second?: string; fromVideo?: boolean };
 
 export type EnquiryHandle = {
-  /** Dodaje stopklatkę z filmiku: najpierw klient zaznacza na niej rybę. Zwraca false, gdy nie ma już miejsca. */
-  addFrame: (frame: Blob, second: string) => boolean;
+  /** Dodaje stopklatkę z filmiku: najpierw klient zaznacza na niej rybę. Zwraca powód, gdy się nie da. */
+  addFrame: (frame: Blob, second: string) => string | null;
 };
 
 /** Zmniejsza zdjęcie w przeglądarce, żeby wysyłka z telefonu była szybka i mieściła się w limicie serwera. */
@@ -34,6 +33,12 @@ async function shrink(file: File): Promise<Blob> {
   }
 }
 
+const FULL = `Koszyk jest pełny (najwyżej ${MAX_ITEMS} ryb w jednym zgłoszeniu). Wyślij go albo usuń którąś rybę.`;
+
+/**
+ * Wybór ryby z filmiku do koszyka: stopklatka albo screenshot, kółko wokół ryby, liczba sztuk.
+ * Klient może tak dodać kilka ryb z tej i z innych ofert, a potem wysłać jedno zgłoszenie z koszyka.
+ */
 export function OfferEnquiry({
   offer,
   taken = [],
@@ -46,136 +51,139 @@ export function OfferEnquiry({
   frameGrab?: boolean;
   ref?: React.Ref<EnquiryHandle>;
 }) {
+  const cart = useCart();
   const left = available(offer);
   const input = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const [shots, setShots] = useState<Shot[]>([]);
-  const [queue, setQueue] = useState<Pending[]>([]);
+  const [shot, setShot] = useState<Blob | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
   const [qty, setQty] = useState(1);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", second: "", message: "", website: "" });
-  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [second, setSecond] = useState("");
   const [error, setError] = useState("");
+  const [added, setAdded] = useState(false);
   const [checked, setChecked] = useState(false);
-  const mustCheck = taken.length > 0 && shots.length > 0;
-
-  const urls = useRef<string[]>([]);
+  const shotUrl = useBlobUrl(shot ?? undefined);
   const nextId = useRef(0);
-  useEffect(() => () => urls.current.forEach((u) => URL.revokeObjectURL(u)), []);
 
-  const free = MAX_SCREENSHOTS - shots.length - queue.length;
+  const mine = cart.items.filter((it) => it.offerId === offer.id);
+  const inCart = mine.reduce((s, it) => s + it.qty, 0);
+  const room = Math.max(0, left - inCart);
+  const full = cart.items.length >= MAX_ITEMS;
+  const mustCheck = taken.length > 0 && shot !== null;
+
   useImperativeHandle(ref, () => ({
-    addFrame(frame, second) {
-      if (free <= 0) return false;
-      setQueue((q) => [...q, { id: nextId.current++, file: frame, name: "stopklatka.jpg", second, fromVideo: true }]);
-      return true;
+    addFrame(frame, sec) {
+      if (full) return FULL;
+      if (room === 0) return "Wszystkie wolne ryby z tego filmiku masz już w koszyku.";
+      if (shot || pending) return "Najpierw dodaj zaznaczoną rybę do koszyka albo ją usuń, potem zrób kolejną stopklatkę.";
+      setAdded(false);
+      setPending({ id: nextId.current++, file: frame, second: sec, fromVideo: true });
+      return null;
     },
-  }), [free]);
+  }), [full, room, shot, pending]);
 
   if (left === 0) {
     return <div className="panel"><p className="notice notice--warn">Wszystkie ryby z tej grupy są już sprzedane.</p></div>;
   }
 
-  async function addFiles(list: FileList | null) {
-    const files = Array.from(list ?? []).filter((f) => f.type.startsWith("image/")).slice(0, free);
-    const next = await Promise.all(files.map(async (f) => ({ id: nextId.current++, file: await shrink(f), name: f.name })));
-    setQueue((q) => [...q, ...next]);
+  async function addFile(list: FileList | null) {
+    const f = Array.from(list ?? []).find((x) => x.type.startsWith("image/"));
     if (input.current) input.current.value = "";
+    if (!f) return;
+    setAdded(false);
+    setPending({ id: nextId.current++, file: await shrink(f) });
   }
 
   function marked(file: Blob) {
-    const done = queue[0];
-    const url = URL.createObjectURL(file);
-    urls.current.push(url);
-    setShots((cur) => [...cur, { file, name: done.name, url }]);
-    setQueue((q) => q.slice(1));
-    if (done.second && !form.second) setForm((f) => ({ ...f, second: done.second! }));
+    const done = pending!;
+    setShot(file);
+    setPending(null);
+    setChecked(false);
+    setError("");
+    if (done.second) setSecond(done.second);
     // Na telefonie formularz jest pod filmikiem; pokazujemy, że stopklatka do niego trafiła.
     if (done.fromVideo) requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
-  function removeShot(i: number) {
-    URL.revokeObjectURL(shots[i].url);
-    setShots((cur) => cur.filter((_, j) => j !== i));
+  function reset() {
+    setShot(null);
+    setQty(1);
+    setSecond("");
+    setChecked(false);
   }
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm({ ...form, [k]: e.target.value });
-
-  async function send(e: React.FormEvent) {
+  async function addToCart(e: React.FormEvent) {
     e.preventDefault();
-    if (!shots.length) {
-      setState("error");
+    if (!shot) {
       setError(frameGrab ? "Zrób stopklatkę albo dodaj screenshot z filmiku, na którym widać rybę." : "Dodaj screenshot z filmiku, na którym widać rybę.");
       return;
     }
     if (mustCheck && !checked) {
-      setState("error");
       setError("Sprawdź, czy Twojej ryby nie ma wśród już wybranych, i zaznacz pole pod nimi.");
       return;
     }
-    setState("sending");
-    setError("");
-    const body = new FormData();
-    body.set("offerId", offer.id);
-    body.set("qty", String(qty));
-    for (const [k, v] of Object.entries(form)) body.set(k, v);
-    shots.forEach((s, i) => body.append("screenshot", s.file, `screenshot-${i + 1}.jpg`));
-    let res: Response;
-    try {
-      res = await fetch("/api/zapytania", { method: "POST", body });
-    } catch {
-      setState("error");
-      setError("Brak połączenia z internetem. Sprawdź zasięg i wyślij jeszcze raz.");
+    if (qty > room) {
+      setError(`Z tego filmiku możesz dodać jeszcze ${room} ${plural(room, "rybę", "ryby", "ryb")}.`);
       return;
     }
-    if (res.ok) return setState("sent");
-    const data = await res.json().catch(() => ({}));
-    setState("error");
-    setError(
-      data.error ??
-        (res.status === 413
-          ? "Zdjęcia są za duże. Usuń jedno z nich albo zrób stopklatkę jeszcze raz."
-          : `Nie udało się wysłać zgłoszenia (błąd ${res.status}). Spróbuj jeszcze raz albo zadzwoń: ${CONTACT.phone}.`),
-    );
+    if (!(await cart.add({ offerId: offer.id, title: offer.title, price: offer.price, qty, second: second.trim().slice(0, 10), shot }))) {
+      setError(FULL);
+      return;
+    }
+    setError("");
+    reset();
+    setAdded(true);
   }
 
-  if (state === "sent") {
-    return (
-      <div className="panel">
-        <p className="notice" role="status">
-          Dziękujemy, mamy Twoje zgłoszenie. Odezwiemy się {form.phone ? "telefonicznie albo SMS-em" : `na ${form.email}`}, potwierdzimy rybę i umówimy odbiór.
-        </p>
-      </div>
-    );
-  }
+  const canPick = !full && room > 0;
 
   return (
-    <form ref={formRef} className="panel" onSubmit={send}>
+    <form ref={formRef} className="panel" onSubmit={addToCart}>
       <h2 className="panel__title">Chcę tę rybę</h2>
-      <ol className="howto small">
-        {frameGrab ? (
-          <li>Kliknij „Zrób stopklatkę” pod filmikiem i suwakiem wybierz moment, w którym dobrze widać rybę. Możesz też dodać własny screenshot.</li>
-        ) : (
-          <li>Zatrzymaj filmik, gdy dobrze widać wybraną rybę, zrób screenshot (zrzut ekranu) i dodaj go tutaj.</li>
-        )}
-        <li>Stuknij w rybę, żeby zaznaczyć ją kółkiem, i wyślij zgłoszenie. Resztę ustalimy z Tobą sami.</li>
-      </ol>
-      {queue[0] && <FishMarker key={queue[0].id} image={queue[0].file} onDone={marked} onCancel={() => setQueue((q) => q.slice(1))} />}
+      {added && (
+        <div className="notice added" role="status">
+          <b>Ryba jest w koszyku.</b>
+          <span className="small">
+            W koszyku: {cart.count} {plural(cart.count, "ryba", "ryby", "ryb")}. Możesz wybrać kolejną z tego filmiku, z innej oferty albo wysłać zgłoszenie.
+          </span>
+          <div className="row">
+            <Link href="/koszyk" className="btn btn--primary btn--sm">Przejdź do koszyka</Link>
+            <Link href="/katalog" className="btn btn--sm">Inne oferty</Link>
+          </div>
+        </div>
+      )}
+      {!shot && canPick && (
+        <ol className="howto small">
+          {frameGrab ? (
+            <li>Kliknij „Zrób stopklatkę” pod filmikiem i suwakiem wybierz moment, w którym dobrze widać rybę. Możesz też dodać własny screenshot.</li>
+          ) : (
+            <li>Zatrzymaj filmik, gdy dobrze widać wybraną rybę, zrób screenshot (zrzut ekranu) i dodaj go tutaj.</li>
+          )}
+          <li>Stuknij w rybę, żeby zaznaczyć ją kółkiem, i dodaj ją do koszyka.</li>
+          <li>Wybierz tak kolejne ryby, też z innych filmików, i wyślij jedno zgłoszenie z koszyka. Resztę ustalimy z Tobą sami.</li>
+        </ol>
+      )}
+      {pending && <FishMarker key={pending.id} image={pending.file} onDone={marked} onCancel={() => setPending(null)} />}
 
-      <div className="shots">
-        {shots.map((s, i) => (
-          <figure key={s.url} className="shot">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={s.url} alt={`Screenshot ${i + 1}`} />
-            <button type="button" className="shot__remove" aria-label={`Usuń screenshot ${i + 1}`} onClick={() => removeShot(i)}>×</button>
-          </figure>
-        ))}
-        {free > 0 && (
-          <label className="shot shot--add">
-            <input ref={input} type="file" accept="image/*" multiple className="visually-hidden" onChange={(e) => addFiles(e.target.files)} />
-            <span>+ Dodaj screenshot</span>
-          </label>
-        )}
-      </div>
+      {full && !shot && <p className="notice notice--warn small">{FULL}</p>}
+      {!full && room === 0 && !shot && <p className="notice small">Wszystkie wolne ryby z tego filmiku masz już w koszyku.</p>}
+
+      {(shot || canPick) && (
+        <div className="shots">
+          {shot && shotUrl ? (
+            <figure className="shot">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={shotUrl} alt="Stopklatka z zaznaczoną rybą" />
+              <button type="button" className="shot__remove" aria-label="Usuń stopklatkę" onClick={reset}>×</button>
+            </figure>
+          ) : (
+            <label className="shot shot--add">
+              <input ref={input} type="file" accept="image/*" className="visually-hidden" onChange={(e) => addFile(e.target.files)} />
+              <span>+ Dodaj screenshot</span>
+            </label>
+          )}
+        </div>
+      )}
 
       {mustCheck && (
         <div className="notice notice--warn taken-check">
@@ -189,48 +197,30 @@ export function OfferEnquiry({
         </div>
       )}
 
-      <div className="two">
-        <label className="field">
-          Ile ryb z tego zrzutu
-          <input type="number" inputMode="numeric" min={1} max={left} value={qty} onChange={(e) => setQty(Math.max(1, Math.min(left, Number(e.target.value) || 1)))} />
-        </label>
-        <label className="field">
-          Sekunda filmiku (opcjonalnie)
-          <input id="video-second" value={form.second} onChange={set("second")} placeholder="np. 0:42" />
-        </label>
-      </div>
-      <label className="field">
-        Imię
-        <input id="enq-name" required value={form.name} onChange={set("name")} autoComplete="given-name" />
-      </label>
-      <div className="two">
-        <label className="field">
-          Telefon
-          <input id="enq-phone" type="tel" value={form.phone} onChange={set("phone")} autoComplete="tel" placeholder="np. 600 100 200" />
-        </label>
-        <label className="field">
-          E-mail
-          <input id="enq-email" type="email" value={form.email} onChange={set("email")} autoComplete="email" />
-        </label>
-      </div>
-      <p className="muted small">Wystarczy telefon albo e-mail.</p>
-      <label className="field">
-        Wiadomość (opcjonalnie)
-        <textarea id="enq-message" rows={3} value={form.message} onChange={set("message")} placeholder="np. mogę przyjechać w sobotę" />
-      </label>
-      <label className="visually-hidden" aria-hidden="true">
-        Strona www
-        <input tabIndex={-1} autoComplete="off" value={form.website} onChange={set("website")} />
-      </label>
-      {state === "error" && <p className="notice notice--error" role="alert">{error}</p>}
-      <p className="muted small">Nie płacisz teraz. Zapłacisz gotówką przy odbiorze albo przelewem, gdy potwierdzimy rybę.</p>
-      <button type="submit" className="btn btn--primary" disabled={state === "sending"}>
-        {state === "sending" ? "Wysyłanie…" : "Wyślij zgłoszenie"}
-      </button>
-      <p className="muted small">
-        Dane ze zgłoszenia wykorzystamy tylko do odpowiedzi i sprzedaży ryby. Stopklatka może pokazać się pod filmikiem jako ryba zarezerwowana,
-        bez Twojego imienia i kontaktu. Więcej w <Link href="/polityka-prywatnosci">polityce prywatności</Link>.
-      </p>
+      {shot && (
+        <>
+          <div className="two">
+            <label className="field">
+              Ile ryb z tej stopklatki
+              <input type="number" inputMode="numeric" min={1} max={room} value={qty} onChange={(e) => setQty(Math.max(1, Math.min(room, Number(e.target.value) || 1)))} />
+            </label>
+            <label className="field">
+              Sekunda filmiku (opcjonalnie)
+              <input id="video-second" value={second} onChange={(e) => setSecond(e.target.value)} placeholder="np. 0:42" />
+            </label>
+          </div>
+          {offer.price && <p className="small muted">{formatPLN(offer.price)} za sztukę. Nie płacisz teraz.</p>}
+          {error && <p className="notice notice--error" role="alert">{error}</p>}
+          <button type="submit" className="btn btn--primary">Dodaj do koszyka</button>
+        </>
+      )}
+      {!shot && error && <p className="notice notice--error" role="alert">{error}</p>}
+
+      {mine.length > 0 && !added && (
+        <p className="small muted">
+          Z tego filmiku masz w koszyku {inCart} {plural(inCart, "rybę", "ryby", "ryb")}. <Link href="/koszyk">Zobacz koszyk ({cart.count})</Link>
+        </p>
+      )}
     </form>
   );
 }

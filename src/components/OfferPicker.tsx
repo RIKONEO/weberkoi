@@ -166,8 +166,10 @@ export function OfferPicker({ offer, taken, details }: { offer: Offer; taken: Ta
       canvas.getContext("2d")!.drawImage(v, 0, 0, canvas.width, canvas.height);
       const frame = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.85));
       if (!frame) throw new Error("brak klatki");
-      if (enquiry.current?.addFrame(frame, clock(v.currentTime))) return true;
-      setNote("Masz już komplet zdjęć w zgłoszeniu. Usuń któreś, żeby dodać nowe.");
+      const why = enquiry.current ? enquiry.current.addFrame(frame, clock(v.currentTime)) : "Formularz jeszcze się wczytuje.";
+      if (!why) return true;
+      setNote(why);
+      return false;
     } catch {
       setNote("Nie udało się zrobić stopklatki. Zrób zwykły screenshot i dodaj go w formularzu.");
     }
@@ -225,8 +227,8 @@ export function OfferPicker({ offer, taken, details }: { offer: Offer; taken: Ta
         {note && <p className="notice notice--warn small" role="status">{note}</p>}
         <p className="muted small">
           {canGrab
-            ? "Podoba Ci się ryba? Kliknij „Zrób stopklatkę”, wybierz moment z rybą i stuknij w nią."
-            : "Podoba Ci się ryba? Zatrzymaj filmik, zrób screenshot i wyślij go nam w formularzu obok."}
+            ? "Podoba Ci się ryba? Kliknij „Zrób stopklatkę”, wybierz moment z rybą, stuknij w nią i dodaj do koszyka."
+            : "Podoba Ci się ryba? Zatrzymaj filmik, zrób screenshot i dodaj go w formularzu obok do koszyka."}
         </p>
         <TakenGallery taken={taken} />
       </div>

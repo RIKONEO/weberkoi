@@ -3,6 +3,7 @@ import "@fontsource/marcellus";
 import "@fontsource-variable/manrope";
 import "./globals.css";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CartProvider } from "@/components/cart/CartProvider";
 import { OPEN_GRAPH_BASE, SITE_URL } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { storeSchema } from "@/lib/schema-org";
@@ -25,8 +26,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="pl">
       <body>
         <JsonLd data={storeSchema()} />
-        {children}
-        <SiteFooter />
+        <CartProvider>
+          {children}
+          <SiteFooter />
+        </CartProvider>
       </body>
     </html>
   );

@@ -1,4 +1,4 @@
-import { boolean, customType, date, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, customType, date, index, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -86,8 +86,13 @@ export const enquiries = pgTable("enquiries", {
    * klient nie wybrał tej samej; „wolna” nie pokazujemy nigdzie.
    */
   fish: text("fish").notNull().default("zarezerwowana"),
+  /**
+   * Wspólny klucz ryb wysłanych razem z koszyka: jedno zgłoszenie klienta = kilka wierszy
+   * (po jednym na rybę), każdy ze swoją stopklatką i stanem ryby. Puste w starych zgłoszeniach.
+   */
+  basket: text("basket"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [index("enquiries_basket_idx").on(t.basket)]);
 
 /** Screenshoty z filmiku dołączone do zgłoszenia. Osobno, żeby lista zgłoszeń nie ładowała obrazków. */
 export const enquiryScreenshots = pgTable("enquiry_screenshots", {
