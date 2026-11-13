@@ -86,7 +86,7 @@ export async function getVideoState(videoId: string, referer?: string): Promise<
       state: "error",
       message: head.status === 404
         ? "Filmik jest gotowy, ale Bunny nie zrobił pliku MP4. W Bunny: Stream → biblioteka → Encoding → włącz „MP4 Fallback”, potem wgraj filmik jeszcze raz (działa tylko dla filmików wgranych po włączeniu)."
-        : "Bunny blokuje dostęp do pliku filmiku (błąd 403). W Bunny: Stream → biblioteka → Security: wyłącz „Block direct URL file access” i „Token authentication”, a „Allowed domains” zostaw puste albo dopisz weberkoisklep.vercel.app. Potem kliknij „Sprawdź jeszcze raz”, nie trzeba wgrywać od nowa.",
+        : "Bunny blokuje dostęp do pliku filmiku (błąd 403). W Bunny: Stream → biblioteka → Security: wyłącz „Block direct URL file access” i „Token authentication”, a „Allowed domains” zostaw puste albo dopisz weberkoi.pl, www.weberkoi.pl i weberkoisklep.vercel.app. Potem kliknij „Sprawdź jeszcze raz”, nie trzeba wgrywać od nowa.",
     };
   }
   return {
