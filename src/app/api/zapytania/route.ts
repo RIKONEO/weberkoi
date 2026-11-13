@@ -2,7 +2,7 @@ import { after, NextResponse } from "next/server";
 import { createEnquiries, getOffer } from "@/lib/data";
 import { type EnquiryItem, parseBasket } from "@/lib/enquiry";
 import { CONTACT } from "@/lib/contact";
-import { notifyNewEnquiry } from "@/lib/notify";
+import { confirmEnquiry, notifyNewEnquiry } from "@/lib/notify";
 
 const SERVER_ERROR = `Coś poszło nie tak po naszej stronie. Spróbuj jeszcze raz za chwilę albo zadzwoń: ${CONTACT.phone}.`;
 
@@ -61,15 +61,13 @@ export async function POST(req: Request) {
     const ids = await createEnquiries(contact, items);
     // E-mail do sklepu wysyłamy już po odpowiedzi dla klienta: nie czeka na niego,
     // a błąd poczty (zły klucz, Resend niedostępny) tylko ląduje w logach.
+    const mailItems = parsed.value.items.map((it, i) => ({ id: ids[i], offer: it.offer, qty: it.qty, second: it.second, screenshots: items[i].screenshots }));
     after(async () => {
-      try {
-        await notifyNewEnquiry(
-          contact,
-          parsed.value.items.map((it, i) => ({ id: ids[i], offer: it.offer, qty: it.qty, second: it.second, screenshots: items[i].screenshots })),
-        );
-      } catch (err) {
-        console.error("zgłoszenie: e-mail do sklepu nie wysłany", { ids, err });
-      }
+      // Dwa maile niezależnie: błąd jednego nie blokuje drugiego.
+      const results = await Promise.allSettled([notifyNewEnquiry(contact, mailItems), confirmEnquiry(contact, mailItems)]);
+      results.forEach((r, i) => {
+        if (r.status === "rejected") console.error(`zgłoszenie: e-mail ${i ? "do klienta" : "do sklepu"} nie wysłany`, { ids, err: r.reason });
+      });
     });
     return NextResponse.json({ ok: true });
   } catch (err) {
