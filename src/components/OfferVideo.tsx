@@ -35,9 +35,9 @@ export function OfferVideo({
           muted
           controlsList="nodownload noremoteplayback"
           disablePictureInPicture
-          onVolumeChange={(e) => {
-            if (!e.currentTarget.muted) e.currentTarget.muted = true;
-          }}
+          // Tylko na stronie oferty (komponent kliencki). Na stronie głównej i w katalogu ten
+          // komponent renderuje serwer, a tam nie wolno przekazywać funkcji do <video>.
+          onVolumeChange={controls ? keepMuted : undefined}
           playsInline
           preload="metadata"
         />
@@ -54,6 +54,10 @@ export function OfferVideo({
       </span>
     </div>
   );
+}
+
+function keepMuted(e: React.SyntheticEvent<HTMLVideoElement>) {
+  if (!e.currentTarget.muted) e.currentTarget.muted = true;
 }
 
 function KoiIcon() {
