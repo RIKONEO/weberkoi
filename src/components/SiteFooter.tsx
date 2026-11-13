@@ -11,6 +11,7 @@ export function SiteFooter() {
           <Link href="/kontakt">Kontakt</Link>
           <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>
           <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
+          <Link href="/polityka-prywatnosci">Polityka prywatności</Link>
           <a href={CONTACT.facebook} target="_blank" rel="noreferrer">
             Facebook
           </a>

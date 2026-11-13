@@ -54,6 +54,14 @@ export async function createEnquiry(e: Enquiry, screenshots: { mime: string; dat
   });
 }
 
+/**
+ * Usuwa zgłoszenie razem ze stopklatkami (dane osobowe klienta, np. na jego prośbę albo po czasie
+ * z polityki prywatności). Sprzedane ryby zostają odjęte z oferty, bo sprzedaż się odbyła.
+ */
+export async function deleteEnquiry(id: number) {
+  await db.delete(enquiries).where(eq(enquiries.id, id));
+}
+
 // --- panel admina ---
 
 export const ENQUIRY_STATUSES = { nowe: "Nowe", odpowiedziano: "Odpisaliśmy", zamkniete: "Zamknięte" } as const;
