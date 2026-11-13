@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { CONTACT } from "@/lib/contact";
 
-export const metadata: Metadata = { title: "Odbiór osobisty" };
+export const metadata: Metadata = {
+  title: "Odbiór osobisty",
+  description: "Koi odbierasz osobiście w Zakrzewie (77-424, ul. Za torami 1). Umawiamy termin, pakujemy rybę w worek z tlenem na drogę.",
+  alternates: { canonical: "/odbior" },
+};
 
 export default function PickupPage() {
   return (

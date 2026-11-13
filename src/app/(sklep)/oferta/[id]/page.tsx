@@ -5,6 +5,9 @@ import { OfferPicker } from "@/components/OfferPicker";
 import { getOffer, listTakenFish } from "@/lib/data";
 import { available, formatPLN, offerSummary, sizeLabel } from "@/lib/offers";
 import { OPEN_GRAPH_BASE } from "@/lib/site";
+import { JsonLd } from "@/components/JsonLd";
+import { offerSchema } from "@/lib/schema-org";
+import { varietySlug } from "@/lib/varieties";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -28,6 +31,7 @@ export default async function OfferPage({ params }: Props) {
   const taken = await listTakenFish(offer.id);
   return (
     <div className="wrap section">
+      <JsonLd data={offerSchema(offer)} />
       <Link href="/katalog" className="back">← Wróć do katalogu</Link>
       <OfferPicker
         offer={offer}
@@ -40,7 +44,7 @@ export default async function OfferPage({ params }: Props) {
             </div>
             <p className="muted">{offer.description}</p>
             <dl className="specs">
-              <dt>Odmiana</dt><dd>{offer.variety}</dd>
+              <dt>Odmiana</dt><dd><Link href={`/odmiany/${varietySlug(offer.variety)}`}>{offer.variety}</Link></dd>
               <dt>Rozmiar</dt><dd>{sizeLabel(offer)}</dd>
               <dt>Wiek</dt><dd>{offer.age}</dd>
               <dt>W grupie</dt><dd className="num">{offer.count} ryb, {available(offer)} dostępnych</dd>

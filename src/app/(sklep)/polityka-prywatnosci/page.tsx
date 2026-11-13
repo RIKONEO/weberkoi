@@ -3,6 +3,7 @@ import { CONTACT } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: "Polityka prywatności",
+  alternates: { canonical: "/polityka-prywatnosci" },
   description: "Jakie dane zbieramy w zgłoszeniu „Chcę tę rybę”, po co, jak długo je trzymamy i jakie masz prawa (RODO).",
 };
 
