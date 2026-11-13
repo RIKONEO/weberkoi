@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OfferPicker } from "@/components/OfferPicker";
 import { getOffer, listTakenFish } from "@/lib/data";
-import { available, formatPLN, sizeLabel } from "@/lib/offers";
+import { available, formatPLN, offerSummary, sizeLabel } from "@/lib/offers";
+import { OPEN_GRAPH_BASE } from "@/lib/site";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -11,7 +12,14 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const offer = await getOffer((await params).id);
-  return offer ? { title: offer.title, description: offer.description } : {};
+  if (!offer) return {};
+  const description = offerSummary(offer);
+  return {
+    title: offer.title,
+    description,
+    alternates: { canonical: `/oferta/${offer.id}` },
+    openGraph: { ...OPEN_GRAPH_BASE, title: offer.title, description, url: `/oferta/${offer.id}` },
+  };
 }
 
 export default async function OfferPage({ params }: Props) {
