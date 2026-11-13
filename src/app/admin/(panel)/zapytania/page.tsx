@@ -24,7 +24,7 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
       {rows.length ? (
         <ul className="cards">
           {rows.map(({ e, offerTitle, screenshots }) => (
-            <li key={e.id} className="panel">
+            <li key={e.id} id={`z${e.id}`} className="panel">
               <div className="admin-offer__head">
                 <Link href={`/admin/oferty/${e.offerId}`}><b>{offerTitle ?? e.offerId}</b></Link>
                 <StatusPill status={e.status} />
