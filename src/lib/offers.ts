@@ -59,3 +59,10 @@ export function offerSummary(o: Offer): string {
     .join(" · ");
   return o.description ? `${o.description.trim().replace(/[.!?\s]*$/, ".")} ${facts}.` : `${facts}. Każda ryba na filmiku, odbiór osobisty w Zakrzewie.`;
 }
+
+/** Polska odmiana po liczbie, np. plural(3, "ryba", "ryby", "ryb") → „ryby”. */
+export function plural(n: number, one: string, few: string, many: string): string {
+  if (n === 1) return one;
+  const d = n % 10, t = n % 100;
+  return d >= 2 && d <= 4 && (t < 10 || t >= 20) ? few : many;
+}

@@ -100,7 +100,8 @@ export async function setEnquiryStatusAction(form: FormData) {
 export async function deleteEnquiryAction(form: FormData) {
   await requireAdmin();
   await deleteEnquiry(Number(form.get("id")));
-  refreshShop(String(form.get("offerId") ?? "") || undefined);
+  // Ryby z koszyka mogą być z kilku ofert: odświeżamy cały sklep.
+  refreshShop();
   revalidatePath("/admin/zapytania");
   revalidatePath("/admin");
 }

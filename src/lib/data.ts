@@ -3,7 +3,8 @@ import "server-only";
 import { and, asc, desc, eq, gte, inArray, sql as dsql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { Offer, TakenFish } from "./offers";
-import type { Enquiry } from "./enquiry";
+import type { Contact, EnquiryItem } from "./enquiry";
+import { randomUUID } from "node:crypto";
 
 const { offers, orderItems, enquiries, enquiryScreenshots, varieties } = schema;
 type OfferRow = typeof offers.$inferSelect;
@@ -46,20 +47,38 @@ export async function listVarieties(): Promise<string[]> {
   return rows.map((r) => r.name);
 }
 
-export async function createEnquiry(e: Enquiry, screenshots: { mime: string; data: Buffer }[]) {
+/**
+ * Zapisuje zgłoszenie z koszyka: po jednym wierszu na rybę, wszystkie ze wspólnym kluczem `basket`
+ * i danymi klienta. Zwraca id wierszy w kolejności ryb.
+ */
+export async function createEnquiries(contact: Contact, items: { item: EnquiryItem; screenshots: { mime: string; data: Buffer }[] }[]) {
+  const basket = randomUUID();
   return db.transaction(async (tx) => {
-    const [row] = await tx.insert(enquiries).values({ ...e, picks: null }).returning({ id: enquiries.id });
-    if (screenshots.length) await tx.insert(enquiryScreenshots).values(screenshots.map((s) => ({ enquiryId: row.id, ...s })));
-    return row.id;
+    const ids: number[] = [];
+    for (const { item, screenshots } of items) {
+      const [row] = await tx.insert(enquiries).values({ ...contact, ...item, picks: null, basket }).returning({ id: enquiries.id });
+      if (screenshots.length) await tx.insert(enquiryScreenshots).values(screenshots.map((s) => ({ enquiryId: row.id, ...s })));
+      ids.push(row.id);
+    }
+    return ids;
   });
 }
 
+/** Wiersz i wszystkie ryby wysłane razem z nim (stare zgłoszenia nie mają koszyka, więc tylko on sam). */
+async function sameBasket(id: number) {
+  const [e] = await db.select({ basket: enquiries.basket }).from(enquiries).where(eq(enquiries.id, id));
+  if (!e) return undefined;
+  return e.basket ? eq(enquiries.basket, e.basket) : eq(enquiries.id, id);
+}
+
 /**
- * Usuwa zgłoszenie razem ze stopklatkami (dane osobowe klienta, np. na jego prośbę albo po czasie
- * z polityki prywatności). Sprzedane ryby zostają odjęte z oferty, bo sprzedaż się odbyła.
+ * Usuwa całe zgłoszenie (wszystkie ryby z koszyka) razem ze stopklatkami: dane osobowe klienta,
+ * np. na jego prośbę albo po czasie z polityki prywatności. Sprzedane ryby zostają odjęte z oferty,
+ * bo sprzedaż się odbyła.
  */
 export async function deleteEnquiry(id: number) {
-  await db.delete(enquiries).where(eq(enquiries.id, id));
+  const where = await sameBasket(id);
+  if (where) await db.delete(enquiries).where(where);
 }
 
 // --- panel admina ---
@@ -69,16 +88,32 @@ export type EnquiryStatus = keyof typeof ENQUIRY_STATUSES;
 
 export async function listEnquiries(status?: EnquiryStatus) {
   const rows = await db
-    .select({ e: enquiries, offerTitle: offers.title })
+    .select({ e: enquiries, offerTitle: offers.title, price: offers.price })
     .from(enquiries)
     .leftJoin(offers, eq(offers.id, enquiries.offerId))
     .where(status ? eq(enquiries.status, status) : undefined)
-    .orderBy(desc(enquiries.createdAt));
+    .orderBy(desc(enquiries.createdAt), asc(enquiries.id));
   const ids = rows.map((r) => r.e.id);
   const shots = ids.length
     ? await db.select({ id: enquiryScreenshots.id, enquiryId: enquiryScreenshots.enquiryId }).from(enquiryScreenshots).where(inArray(enquiryScreenshots.enquiryId, ids))
     : [];
   return rows.map((r) => ({ ...r, screenshots: shots.filter((s) => s.enquiryId === r.e.id).map((s) => s.id) }));
+}
+
+export type EnquiryRow = Awaited<ReturnType<typeof listEnquiries>>[number];
+/** Zgłoszenie klienta: dane kontaktowe i ryby z koszyka (w starych zgłoszeniach jedna). */
+export type EnquiryRequest = { key: string; first: EnquiryRow["e"]; items: EnquiryRow[] };
+
+/** Zgłoszenia pogrupowane po koszyku, najnowsze na górze; ryby w kolejności z koszyka. */
+export async function listRequests(status?: EnquiryStatus): Promise<EnquiryRequest[]> {
+  const groups = new Map<string, EnquiryRequest>();
+  for (const r of await listEnquiries(status)) {
+    const key = r.e.basket ?? `z${r.e.id}`;
+    const g = groups.get(key);
+    if (g) g.items.push(r);
+    else groups.set(key, { key, first: r.e, items: [r] });
+  }
+  return [...groups.values()];
 }
 
 export async function getScreenshot(id: number) {
@@ -131,8 +166,10 @@ export async function getPublicScreenshot(id: number) {
   return r;
 }
 
+/** Status dotyczy całego zgłoszenia, więc zmieniamy go wszystkim rybom z tego samego koszyka. */
 export async function setEnquiryStatus(id: number, status: EnquiryStatus) {
-  await db.update(enquiries).set({ status }).where(eq(enquiries.id, id));
+  const where = await sameBasket(id);
+  if (where) await db.update(enquiries).set({ status }).where(where);
 }
 
 export type OfferInput = Omit<typeof offers.$inferInsert, "addedAt">;
@@ -210,17 +247,20 @@ export async function moveVariety(name: string, dir: -1 | 1) {
   });
 }
 
+/** Liczba zgłoszeń, a nie ryb: ryby z jednego koszyka liczą się raz. */
+const REQUESTS = dsql<number>`count(distinct coalesce(${enquiries.basket}, ${enquiries.id}::text))::int`;
+
 /** Wszystko do pulpitu panelu: zgłoszenia z ostatnich dni i stan ofert. */
 export async function dashboardData(days = 14) {
   const since = new Date(Date.now() - days * 24 * 3600 * 1000);
   const [byStatus, perDay, latest, all] = await Promise.all([
-    db.select({ status: enquiries.status, n: dsql<number>`count(*)::int` }).from(enquiries).groupBy(enquiries.status),
+    db.select({ status: enquiries.status, n: REQUESTS }).from(enquiries).groupBy(enquiries.status),
     db
-      .select({ day: dsql<string>`to_char(${enquiries.createdAt} at time zone 'Europe/Warsaw', 'YYYY-MM-DD')`, n: dsql<number>`count(*)::int` })
+      .select({ day: dsql<string>`to_char(${enquiries.createdAt} at time zone 'Europe/Warsaw', 'YYYY-MM-DD')`, n: REQUESTS })
       .from(enquiries)
       .where(gte(enquiries.createdAt, since))
       .groupBy(dsql`1`),
-    listEnquiries().then((rows) => rows.slice(0, 5)),
+    listRequests().then((rows) => rows.slice(0, 5)),
     listOffers({ includeHidden: true }),
   ]);
   const status = Object.fromEntries(byStatus.map((r) => [r.status, r.n])) as Partial<Record<EnquiryStatus, number>>;

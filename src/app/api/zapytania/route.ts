@@ -1,6 +1,6 @@
 import { after, NextResponse } from "next/server";
-import { createEnquiry, getOffer } from "@/lib/data";
-import { parseEnquiry } from "@/lib/enquiry";
+import { createEnquiries, getOffer } from "@/lib/data";
+import { type EnquiryItem, parseBasket } from "@/lib/enquiry";
 import { CONTACT } from "@/lib/contact";
 import { notifyNewEnquiry } from "@/lib/notify";
 
@@ -43,25 +43,32 @@ export async function POST(req: Request) {
     if (!form) return NextResponse.json({ error: "Nieprawidłowe zgłoszenie." }, { status: 400 });
     // Pole niewidoczne dla ludzi; wypełniają je tylko boty.
     if (String(form.get("website") ?? "")) return NextResponse.json({ ok: true });
-    const offer = await getOffer(String(form.get("offerId") ?? ""));
-    const parsed = parseEnquiry(form, offer);
+    const parsed = await parseBasket(form, (id) => getOffer(id));
     if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 422 });
 
-    const screenshots: { mime: string; data: Buffer }[] = [];
-    for (const file of parsed.value.files) {
-      const shot = await normalize(file);
-      if (!shot) return NextResponse.json({ error: "Nie udało się odczytać screenshota. Spróbuj z innym plikiem." }, { status: 422 });
-      screenshots.push(shot);
+    const items: { item: EnquiryItem; screenshots: { mime: string; data: Buffer }[] }[] = [];
+    for (const it of parsed.value.items) {
+      const screenshots: { mime: string; data: Buffer }[] = [];
+      for (const file of it.files) {
+        const shot = await normalize(file);
+        if (!shot) return NextResponse.json({ error: `„${it.offer.title}”: nie udało się odczytać zdjęcia. Spróbuj z innym plikiem.` }, { status: 422 });
+        screenshots.push(shot);
+      }
+      items.push({ item: { offerId: it.offerId, qty: it.qty, second: it.second }, screenshots });
     }
 
-    const id = await createEnquiry(parsed.value.enquiry, screenshots);
+    const { contact } = parsed.value;
+    const ids = await createEnquiries(contact, items);
     // E-mail do sklepu wysyłamy już po odpowiedzi dla klienta: nie czeka na niego,
     // a błąd poczty (zły klucz, Resend niedostępny) tylko ląduje w logach.
     after(async () => {
       try {
-        await notifyNewEnquiry(id, parsed.value.enquiry, offer!, screenshots);
+        await notifyNewEnquiry(
+          contact,
+          parsed.value.items.map((it, i) => ({ id: ids[i], offer: it.offer, qty: it.qty, second: it.second, screenshots: items[i].screenshots })),
+        );
       } catch (err) {
-        console.error("zgłoszenie: e-mail do sklepu nie wysłany", { id, err });
+        console.error("zgłoszenie: e-mail do sklepu nie wysłany", { ids, err });
       }
     });
     return NextResponse.json({ ok: true });
