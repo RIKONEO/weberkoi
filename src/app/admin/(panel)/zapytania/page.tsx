@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ENQUIRY_STATUSES, FISH_STATES, type EnquiryStatus, listEnquiries } from "@/lib/data";
-import { setEnquiryFishAction, setEnquiryStatusAction } from "../../actions";
+import { deleteEnquiryAction, setEnquiryFishAction, setEnquiryStatusAction } from "../../actions";
 import { StatusPill } from "@/components/admin/StatusPill";
 
 export const metadata: Metadata = { title: "Zgłoszenia" };
@@ -72,6 +72,15 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
                   </form>
                 ))}
               </div>
+              <details className="small">
+                <summary className="muted">Usuń zgłoszenie (np. na prośbę klienta)</summary>
+                <form action={deleteEnquiryAction} className="row">
+                  <input type="hidden" name="id" value={e.id} />
+                  <input type="hidden" name="offerId" value={e.offerId} />
+                  <span className="muted">Znikną dane klienta i stopklatki, także spod filmiku. Tego nie da się cofnąć.</span>
+                  <button type="submit" className="btn btn--sm">Tak, usuń na zawsze</button>
+                </form>
+              </details>
             </li>
           ))}
         </ul>

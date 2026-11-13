@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
+import Link from "next/link";
 import { type Offer, type TakenFish, available } from "@/lib/offers";
 import { MAX_SCREENSHOTS } from "@/lib/enquiry";
 import { FishMarker } from "./FishMarker";
@@ -227,6 +228,10 @@ export function OfferEnquiry({
       <button type="submit" className="btn btn--primary" disabled={state === "sending"}>
         {state === "sending" ? "Wysyłanie…" : "Wyślij zgłoszenie"}
       </button>
+      <p className="muted small">
+        Dane ze zgłoszenia wykorzystamy tylko do odpowiedzi i sprzedaży ryby. Stopklatka może pokazać się pod filmikiem jako ryba zarezerwowana,
+        bez Twojego imienia i kontaktu. Więcej w <Link href="/polityka-prywatnosci">polityce prywatności</Link>.
+      </p>
     </form>
   );
 }

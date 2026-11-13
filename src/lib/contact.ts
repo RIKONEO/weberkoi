@@ -1,6 +1,8 @@
 // Dane kontaktowe sklepu, w jednym miejscu dla stron Kontakt, Odbiór osobisty i stopki.
 export const CONTACT = {
   person: "Marcin",
+  /** Administrator danych w polityce prywatności. */
+  owner: "Marcin, prowadzący sprzedaż koi pod nazwą WEBER Nishikigoi",
   phone: "887 398 896",
   phoneHref: "tel:+48887398896",
   email: "marcinweber66@gmail.com",

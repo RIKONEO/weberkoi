@@ -18,6 +18,7 @@ import {
   offerHasOrders,
   renameVariety,
   saveOffer,
+  deleteEnquiry,
   setEnquiryFish,
   setEnquiryStatus,
   setOfferFlag,
@@ -94,6 +95,14 @@ export async function setEnquiryStatusAction(form: FormData) {
   const status = String(form.get("status") ?? "") as EnquiryStatus;
   if (status in ENQUIRY_STATUSES) await setEnquiryStatus(Number(form.get("id")), status);
   revalidatePath("/admin/zapytania");
+}
+
+export async function deleteEnquiryAction(form: FormData) {
+  await requireAdmin();
+  await deleteEnquiry(Number(form.get("id")));
+  refreshShop(String(form.get("offerId") ?? "") || undefined);
+  revalidatePath("/admin/zapytania");
+  revalidatePath("/admin");
 }
 
 /** „Sprzedana”, „Zarezerwowana” albo „Wolna” przy zgłoszeniu; od tego zależy galeria pod filmikiem. */

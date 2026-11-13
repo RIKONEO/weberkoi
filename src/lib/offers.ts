@@ -51,3 +51,11 @@ export function sizeLabel(o: Offer): string {
 export function formatPLN(n: number): string {
   return `${n.toLocaleString("pl-PL")} zł`;
 }
+
+/** Krótki opis oferty do podglądu linku: opis od sprzedawcy albo same konkrety. */
+export function offerSummary(o: Offer): string {
+  const facts = [o.variety, sizeLabel(o), o.age, o.price ? `${formatPLN(o.price)} za sztukę` : "cena do ustalenia", `${available(o)} z ${o.count} dostępnych`]
+    .filter(Boolean)
+    .join(" · ");
+  return o.description ? `${o.description.trim().replace(/[.!?\s]*$/, ".")} ${facts}.` : `${facts}. Każda ryba na filmiku, odbiór osobisty w Zakrzewie.`;
+}
