@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createEnquiry, getOffer } from "@/lib/data";
 import { parseEnquiry } from "@/lib/enquiry";
 import { CONTACT } from "@/lib/contact";
+import { notifyNewEnquiry } from "@/lib/notify";
 
 const SERVER_ERROR = `Coś poszło nie tak po naszej stronie. Spróbuj jeszcze raz za chwilę albo zadzwoń: ${CONTACT.phone}.`;
 
@@ -53,8 +54,16 @@ export async function POST(req: Request) {
       screenshots.push(shot);
     }
 
-    await createEnquiry(parsed.value.enquiry, screenshots);
-    // Następny krok: e-mail do sklepu o nowym zgłoszeniu.
+    const id = await createEnquiry(parsed.value.enquiry, screenshots);
+    // E-mail do sklepu wysyłamy już po odpowiedzi dla klienta: nie czeka na niego,
+    // a błąd poczty (zły klucz, Resend niedostępny) tylko ląduje w logach.
+    after(async () => {
+      try {
+        await notifyNewEnquiry(id, parsed.value.enquiry, offer!, screenshots);
+      } catch (err) {
+        console.error("zgłoszenie: e-mail do sklepu nie wysłany", { id, err });
+      }
+    });
     return NextResponse.json({ ok: true });
   } catch (err) {
     // Trafia do logów Vercela (Logs, ścieżka /api/zapytania).
