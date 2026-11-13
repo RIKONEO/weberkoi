@@ -152,11 +152,10 @@ export function OfferEnquiry({
     <form ref={formRef} className="panel" onSubmit={send}>
       <h2 className="panel__title">Chcę tę rybę</h2>
       <ol className="howto small">
-        <li>Zatrzymaj filmik, gdy dobrze widać wybraną rybę.</li>
         {frameGrab ? (
-          <li>Kliknij „Zrób stopklatkę” pod filmikiem albo dodaj własny screenshot.</li>
+          <li>Kliknij „Zrób stopklatkę” pod filmikiem i suwakiem wybierz moment, w którym dobrze widać rybę. Możesz też dodać własny screenshot.</li>
         ) : (
-          <li>Zrób screenshot (zrzut ekranu) i dodaj go tutaj.</li>
+          <li>Zatrzymaj filmik, gdy dobrze widać wybraną rybę, zrób screenshot (zrzut ekranu) i dodaj go tutaj.</li>
         )}
         <li>Stuknij w rybę, żeby zaznaczyć ją kółkiem, i wyślij zgłoszenie. Resztę ustalimy z Tobą sami.</li>
       </ol>
