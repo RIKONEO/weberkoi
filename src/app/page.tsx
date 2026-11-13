@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PondHero } from "@/components/PondHero";
 import { OfferCard } from "@/components/OfferCard";
 import { listOffers } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
+// Każda podstrona ustawia swój adres kanoniczny; ten dotyczy tylko strony głównej.
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const all = await listOffers();

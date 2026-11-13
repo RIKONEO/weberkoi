@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { CONTACT } from "@/lib/contact";
 
-export const metadata: Metadata = { title: "Kontakt" };
+export const metadata: Metadata = {
+  title: "Kontakt",
+  description: "Zadzwoń, napisz SMS-a, maila albo na Facebooku. WEBER Nishikigoi, Zakrzewo, tel. 887 398 896.",
+  alternates: { canonical: "/kontakt" },
+};
 
 export default function ContactPage() {
   return (

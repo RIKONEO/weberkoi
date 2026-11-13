@@ -3,8 +3,14 @@ import Link from "next/link";
 import { OfferCard } from "@/components/OfferCard";
 import { listOffers, listVarieties } from "@/lib/data";
 import { SIZE_FILTERS } from "@/lib/offers";
+import { varietySlug } from "@/lib/varieties";
 
-export const metadata: Metadata = { title: "Katalog koi" };
+export const metadata: Metadata = {
+  title: "Katalog koi na sprzedaż",
+  description: "Karpie koi na sprzedaż: Kohaku, Showa, Sanke, Ogon, Chagoi i inne. Każda ryba na filmiku, cena za sztukę, odbiór osobisty w Zakrzewie.",
+  // Filtry w adresie (?odmiana=…) to ta sama strona; Google ma liczyć ją raz.
+  alternates: { canonical: "/katalog" },
+};
 export const dynamic = "force-dynamic";
 
 type Search = { odmiana?: string; rozmiar?: string; cena?: string };
@@ -52,6 +58,12 @@ export default async function Catalog({ searchParams }: { searchParams: Promise<
           <Link className="chip" aria-pressed={sp.cena === "zapytaj"} href={href(sp, { cena: "zapytaj" })}>Zapytaj o cenę</Link>
         </div>
       </div>
+
+      {sp.odmiana && varieties.includes(sp.odmiana) && (
+        <p className="muted" style={{ margin: "0 0 20px" }}>
+          <Link href={`/odmiany/${varietySlug(sp.odmiana)}`}>Czym wyróżnia się {sp.odmiana}? →</Link>
+        </p>
+      )}
 
       {list.length ? (
         <div className="grid">
