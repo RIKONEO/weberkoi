@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { type FishMap as FishMapData, type MapMarker, type MapStatuses, type Offer, available, formatPLN, plural } from "@/lib/offers";
 import { MAX_ITEMS } from "@/lib/enquiry";
+import { PICKUP_TEXT } from "@/lib/pickup";
 import { useCart } from "./cart/CartProvider";
 
 type PinState = "wolna" | "zarezerwowana" | "sprzedana" | "koszyk";
@@ -19,8 +20,7 @@ const LABEL: Record<PinState, string> = {
  * Stopklatka do koszyka: cała klatka mapy z żółtym kółkiem i numerem wybranej ryby, tak jak przy
  * własnej stopklatce klienta. Dzięki temu panel, maile i koszyk działają bez zmian.
  */
-async function markedShot(src: string, m: MapMarker): Promise<Blob> {
-  const blob = await (await fetch(src)).blob();
+async function markedShot(blob: Blob, m: MapMarker): Promise<Blob> {
   const bmp = await createImageBitmap(blob);
   const scale = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
   const canvas = document.createElement("canvas");
@@ -65,11 +65,13 @@ async function markedShot(src: string, m: MapMarker): Promise<Blob> {
  */
 export function FishMap({ offer, map, statuses }: { offer: Offer; map: FishMapData; statuses: MapStatuses }) {
   const cart = useCart();
-  const [selected, setSelected] = useState<number | null>(null);
+  // Zaznaczone wolne ryby (można kilka naraz) i ryba zajęta, o którą klient dopytał stuknięciem.
+  const [picked, setPicked] = useState<number[]>([]);
+  const [info, setInfo] = useState<number | null>(null);
   const [zoom, setZoom] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [added, setAdded] = useState<number | null>(null);
+  const [added, setAdded] = useState<number[]>([]);
   const src = `/mapa/${offer.id}?v=${map.version}`;
 
   const inCart = new Set(cart.items.filter((it) => it.offerId === offer.id && it.fishNo).map((it) => it.fishNo!));
@@ -77,31 +79,44 @@ export function FishMap({ offer, map, statuses }: { offer: Offer; map: FishMapDa
   const counts = { wolna: 0, zarezerwowana: 0, sprzedana: 0, koszyk: 0 };
   for (const m of map.markers) counts[stateOf(m.n)]++;
   const room = available(offer) - cart.items.filter((it) => it.offerId === offer.id).reduce((s, it) => s + it.qty, 0);
-
-  const sel = selected != null ? map.markers.find((m) => m.n === selected) : undefined;
-  const selState = sel ? stateOf(sel.n) : undefined;
+  const free = map.markers.filter((m) => stateOf(m.n) === "wolna").map((m) => m.n);
+  // Ryba mogła w międzyczasie trafić do koszyka (np. w innej karcie): liczymy tylko wciąż wolne.
+  const chosen = picked.filter((n) => free.includes(n)).sort((a, b) => a - b);
+  const infoState = info != null ? stateOf(info) : undefined;
 
   function pick(n: number) {
     setError("");
-    setAdded(null);
-    setSelected((cur) => (cur === n ? null : n));
+    setAdded([]);
+    if (stateOf(n) === "wolna") {
+      setInfo(null);
+      setPicked((cur) => (cur.includes(n) ? cur.filter((x) => x !== n) : [...cur, n]));
+    } else setInfo((cur) => (cur === n ? null : n));
   }
 
   async function add() {
-    if (!sel || busy) return;
-    if (cart.items.length >= MAX_ITEMS) return setError(`Koszyk jest pełny (najwyżej ${MAX_ITEMS} ryb w jednym zgłoszeniu). Wyślij go albo usuń którąś rybę.`);
-    if (room <= 0) return setError("Wszystkie wolne ryby z tego filmiku masz już w koszyku.");
+    if (!chosen.length || busy) return;
+    const slots = MAX_ITEMS - cart.items.length;
+    if (slots <= 0) return setError(`Koszyk jest pełny (najwyżej ${MAX_ITEMS} ryb w jednym zgłoszeniu). Wyślij go albo usuń którąś rybę.`);
+    if (chosen.length > slots) return setError(`Do koszyka zmieści się jeszcze ${slots} ${plural(slots, "ryba", "ryby", "ryb")} (najwyżej ${MAX_ITEMS} w jednym zgłoszeniu). Odznacz kilka.`);
+    if (chosen.length > room) {
+      return setError(room > 0 ? `Z tego filmiku możesz dodać jeszcze ${room} ${plural(room, "rybę", "ryby", "ryb")}. Odznacz kilka.` : "Wszystkie wolne ryby z tego filmiku masz już w koszyku.");
+    }
     setBusy(true);
+    const done: number[] = [];
     try {
-      const shot = await markedShot(src, sel);
-      if (!(await cart.add({ offerId: offer.id, title: offer.title, price: offer.price, qty: 1, second: "", fishNo: sel.n, shot }))) {
-        setError(`Koszyk jest pełny (najwyżej ${MAX_ITEMS} ryb w jednym zgłoszeniu).`);
-        return;
+      const frame = await (await fetch(src)).blob();
+      for (const n of chosen) {
+        const m = map.markers.find((x) => x.n === n)!;
+        const shot = await markedShot(frame, m);
+        if (!(await cart.add({ offerId: offer.id, title: offer.title, price: offer.price, qty: 1, second: "", fishNo: n, shot }))) break;
+        done.push(n);
       }
-      setAdded(sel.n);
-      setSelected(null);
+      if (done.length < chosen.length) setError(`Koszyk jest pełny (najwyżej ${MAX_ITEMS} ryb w jednym zgłoszeniu).`);
+      setAdded(done);
+      setPicked([]);
     } catch {
-      setError("Nie udało się dodać ryby. Odśwież stronę i spróbuj jeszcze raz.");
+      setError("Nie udało się dodać ryb. Odśwież stronę i spróbuj jeszcze raz.");
+      if (done.length) setAdded(done);
     } finally {
       setBusy(false);
     }
@@ -110,19 +125,22 @@ export function FishMap({ offer, map, statuses }: { offer: Offer; map: FishMapDa
   function removeFromCart(n: number) {
     const it = cart.items.find((i) => i.offerId === offer.id && i.fishNo === n);
     if (it) cart.remove(it.id);
-    setSelected(null);
+    setInfo(null);
   }
+
+  const total = offer.price ? offer.price * chosen.length : 0;
+  const nrs = (list: number[]) => list.map((n) => `nr ${n}`).join(", ");
 
   return (
     <section className="fishmap" aria-labelledby="fishmap-title">
       <div className="fishmap__head">
-        <h2 id="fishmap-title" className="fishmap__title">Wybierz rybę</h2>
+        <h2 id="fishmap-title" className="fishmap__title">Wybierz ryby</h2>
         <button type="button" className="chip" aria-pressed={zoom} onClick={() => setZoom(!zoom)}>
           {zoom ? "Pomniejsz" : "Powiększ"}
         </button>
       </div>
       <p className="muted small">
-        Stuknij w <b className="fishmap__c--wolna">zieloną</b> rybę i dodaj ją do koszyka. Na filmiku wyżej zobaczysz, jak pływa. Podaj nam numer, jeśli dzwonisz.
+        Stuknij w <b className="fishmap__c--wolna">zielone</b> ryby, które Ci się podobają (możesz kilka naraz), i dodaj je do koszyka. Na filmiku wyżej zobaczysz, jak pływają.
       </p>
       <div className={zoom ? "fishmap__scroll fishmap__scroll--zoom" : "fishmap__scroll"}>
         <div className="fishmap__stage" style={{ aspectRatio: `${map.width} / ${map.height}` }}>
@@ -134,11 +152,11 @@ export function FishMap({ offer, map, statuses }: { offer: Offer; map: FishMapDa
               <button
                 key={m.n}
                 type="button"
-                className={`fishmap__pin fishmap__pin--${st}${selected === m.n ? " is-selected" : ""}`}
+                className={`fishmap__pin fishmap__pin--${st}${chosen.includes(m.n) || info === m.n ? " is-selected" : ""}`}
                 style={{ left: `${m.x * 100}%`, top: `${m.y * 100}%` }}
                 onClick={() => pick(m.n)}
                 aria-label={`Ryba nr ${m.n}, ${LABEL[st]}`}
-                aria-pressed={selected === m.n}
+                aria-pressed={chosen.includes(m.n)}
               >
                 {m.n}
               </button>
@@ -154,35 +172,57 @@ export function FishMap({ offer, map, statuses }: { offer: Offer; map: FishMapDa
         <li><i className="fishmap__dot fishmap__dot--sprzedana" />Sprzedane: {counts.sprzedana}</li>
       </ul>
 
-      {sel && (
+      {chosen.length > 0 ? (
         <div className="fishmap__bar" role="status">
           <div>
-            <b>Ryba nr {sel.n}</b>
+            <b>Wybrane: {nrs(chosen)}</b>
             <span className="small muted">
               {" · "}
-              {selState === "wolna" && (offer.price ? `${formatPLN(offer.price)}, płatność przy odbiorze` : "cena do ustalenia")}
-              {selState === "zarezerwowana" && "ktoś już ją wybrał i czeka na potwierdzenie"}
-              {selState === "sprzedana" && "już sprzedana"}
-              {selState === "koszyk" && "jest w Twoim koszyku"}
+              {chosen.length} {plural(chosen.length, "ryba", "ryby", "ryb")}
+              {total ? `, razem ${formatPLN(total)}` : ", cena do ustalenia"}. Płacisz przy odbiorze, odbiór do {PICKUP_TEXT} od zgłoszenia.
             </span>
           </div>
-          {selState === "wolna" && (
+          <div className="row">
             <button type="button" className="btn btn--primary" onClick={add} disabled={busy}>
-              {busy ? "Dodaję…" : `Dodaj nr ${sel.n} do koszyka`}
+              {busy ? "Dodaję…" : chosen.length === 1 ? `Dodaj nr ${chosen[0]} do koszyka` : `Dodaj ${chosen.length} ${plural(chosen.length, "rybę", "ryby", "ryb")} do koszyka`}
             </button>
-          )}
-          {selState === "koszyk" && (
+            <button type="button" className="chip" onClick={() => setPicked([])} disabled={busy}>Wyczyść</button>
+          </div>
+        </div>
+      ) : (
+        free.length > 1 && (
+          <p className="small muted">
+            Chcesz kilka? Stuknij po kolei w każdą albo{" "}
+            <button type="button" className="link-btn" onClick={() => { setPicked(free); setInfo(null); setAdded([]); }}>
+              zaznacz wszystkie wolne ({free.length})
+            </button>
+            .
+          </p>
+        )
+      )}
+      {info != null && infoState !== "wolna" && (
+        <div className="fishmap__bar" role="status">
+          <span>
+            <b>Ryba nr {info}</b>
+            <span className="small muted">
+              {" · "}
+              {infoState === "zarezerwowana" && "ktoś już ją wybrał i czeka na odbiór"}
+              {infoState === "sprzedana" && "już sprzedana"}
+              {infoState === "koszyk" && "jest w Twoim koszyku"}
+            </span>
+          </span>
+          {infoState === "koszyk" && (
             <div className="row">
               <Link href="/koszyk" className="btn btn--primary btn--sm">Koszyk</Link>
-              <button type="button" className="chip" onClick={() => removeFromCart(sel.n)}>Usuń z koszyka</button>
+              <button type="button" className="chip" onClick={() => removeFromCart(info)}>Usuń z koszyka</button>
             </div>
           )}
         </div>
       )}
       {error && <p className="notice notice--error small" role="alert">{error}</p>}
-      {added != null && (
+      {added.length > 0 && (
         <div className="notice added" role="status">
-          <b>Ryba nr {added} jest w koszyku.</b>
+          <b>{added.length === 1 ? `Ryba nr ${added[0]} jest w koszyku.` : `Ryby ${nrs(added)} są w koszyku.`}</b>
           <span className="small">
             W koszyku: {cart.count} {plural(cart.count, "ryba", "ryby", "ryb")}. Wybierz kolejną albo wyślij zgłoszenie.
           </span>
