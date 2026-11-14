@@ -50,6 +50,13 @@
       "when": 1794600797708,
       "tag": "0006_koszyk",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794670495903,
+      "tag": "0007_mapa_ryb",
+      "breakpoints": true
     }
   ]
 }

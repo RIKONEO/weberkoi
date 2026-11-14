@@ -47,11 +47,14 @@ function Item({ item, onRemove, onQty }: { item: CartItem; onRemove: () => void;
           {item.price ? `${formatPLN(item.price)} za sztukę` : "cena do ustalenia"}
           {item.second && ` · ${item.second} na filmiku`}
         </span>
+        {item.fishNo && <span className="small"><b>Ryba nr {item.fishNo}</b> z mapy pod filmikiem</span>}
         <div className="cart-item__row">
-          <label className="small cart-item__qty">
-            Sztuk
-            <input type="number" inputMode="numeric" min={1} max={20} value={item.qty} onChange={(e) => onQty(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} />
-          </label>
+          {!item.fishNo && (
+            <label className="small cart-item__qty">
+              Sztuk
+              <input type="number" inputMode="numeric" min={1} max={20} value={item.qty} onChange={(e) => onQty(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} />
+            </label>
+          )}
           <button type="button" className="chip" onClick={onRemove}>Usuń</button>
         </div>
       </div>
@@ -78,7 +81,7 @@ export function CartView() {
     setError("");
     const body = new FormData();
     for (const [k, v] of Object.entries(form)) body.set(k, v);
-    body.set("items", JSON.stringify(cart.items.map((it) => ({ offerId: it.offerId, qty: it.qty, second: it.second }))));
+    body.set("items", JSON.stringify(cart.items.map((it) => ({ offerId: it.offerId, qty: it.qty, second: it.second, fishNo: it.fishNo }))));
     const shots = await fitShots(cart.items);
     shots.forEach((b, i) => body.append(`shot-${i}`, b, `ryba-${i + 1}.jpg`));
     let res: Response;
@@ -123,7 +126,7 @@ export function CartView() {
     return (
       <div className="panel">
         <p>Koszyk jest pusty.</p>
-        <p className="muted small">Otwórz ofertę, kliknij „Zrób stopklatkę” pod filmikiem, zaznacz rybę i dodaj ją do koszyka. Możesz tak zebrać kilka ryb z różnych filmików.</p>
+        <p className="muted small">Otwórz ofertę i stuknij w wolną (zieloną) rybę na mapie pod filmikiem albo zrób stopklatkę i zaznacz na niej rybę. Możesz tak zebrać kilka ryb z różnych filmików.</p>
         <Link href="/katalog" className="btn btn--primary">Przejdź do katalogu</Link>
       </div>
     );

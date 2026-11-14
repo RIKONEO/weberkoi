@@ -17,6 +17,8 @@ export type CartItem = {
   price: number | null;
   qty: number;
   second: string;
+  /** Numer ryby z mapy pod filmikiem; brak = własna stopklatka albo screenshot. */
+  fishNo?: number;
   shot: Blob;
   addedAt: number;
 };

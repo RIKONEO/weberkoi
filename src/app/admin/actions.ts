@@ -22,6 +22,7 @@ import {
   setEnquiryFish,
   setEnquiryStatus,
   setOfferFlag,
+  pgCode,
 } from "@/lib/data";
 import { parseOfferForm, parseVarietyName } from "@/lib/offerForm";
 
@@ -111,7 +112,13 @@ export async function setEnquiryFishAction(form: FormData) {
   await requireAdmin();
   const fish = String(form.get("fish") ?? "") as FishState;
   if (!(fish in FISH_STATES)) return;
-  await setEnquiryFish(Number(form.get("id")), fish);
+  try {
+    await setEnquiryFish(Number(form.get("id")), fish);
+  } catch (err) {
+    // Ryba z mapy, którą w międzyczasie zarezerwował ktoś inny: dwóch rezerwacji jednej ryby nie ma.
+    if (pgCode(err) !== "23505") throw err;
+    redirect(withError("/admin/zapytania", "Tę rybę z mapy ma już w rezerwacji inne zgłoszenie. Najpierw ustaw tam „Wolna”."));
+  }
   refreshShop(String(form.get("offerId") ?? "") || undefined);
   revalidatePath("/admin/zapytania");
   revalidatePath("/admin");

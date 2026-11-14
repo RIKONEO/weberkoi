@@ -1,4 +1,5 @@
-import { boolean, customType, date, index, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { boolean, customType, date, index, integer, jsonb, pgTable, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -91,8 +92,34 @@ export const enquiries = pgTable("enquiries", {
    * (po jednym na rybę), każdy ze swoją stopklatką i stanem ryby. Puste w starych zgłoszeniach.
    */
   basket: text("basket"),
+  /** Numer ryby z mapy ryb pod filmikiem; puste, gdy klient zrobił własną stopklatkę albo screenshot. */
+  fishNo: integer("fish_no"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [index("enquiries_basket_idx").on(t.basket)]);
+}, (t) => [
+  index("enquiries_basket_idx").on(t.basket),
+  // Jedna ryba z mapy może być zarezerwowana albo sprzedana tylko w jednym zgłoszeniu naraz.
+  // Baza pilnuje tego sama, więc dwóch klientów w tej samej sekundzie nie weźmie tej samej ryby.
+  uniqueIndex("enquiries_fish_no_taken_idx")
+    .on(t.offerId, t.fishNo)
+    .where(sql`${t.fishNo} is not null and ${t.fish} in ('zarezerwowana', 'sprzedana')`),
+]);
+
+/** Znacznik ryby na mapie: numer i położenie jako ułamek szerokości i wysokości klatki (0–1). */
+export type MapMarker = { n: number; x: number; y: number };
+
+/**
+ * Mapa ryb oferty: jedna klatka z filmiku z ponumerowanymi rybami, wspólna dla wszystkich klientów.
+ * Marcin zaznacza ryby raz w panelu, a klient stuka w wolną rybę i dodaje ją do koszyka.
+ */
+export const fishMaps = pgTable("fish_maps", {
+  offerId: text("offer_id").primaryKey().references(() => offers.id, { onDelete: "cascade" }),
+  mime: text("mime").notNull(),
+  data: bytea("data").notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  markers: jsonb("markers").$type<MapMarker[]>().notNull().default([]),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 /** Screenshoty z filmiku dołączone do zgłoszenia. Osobno, żeby lista zgłoszeń nie ładowała obrazków. */
 export const enquiryScreenshots = pgTable("enquiry_screenshots", {

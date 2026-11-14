@@ -1,40 +1,16 @@
 import { after, NextResponse } from "next/server";
-import { createEnquiries, getOffer } from "@/lib/data";
-import { type EnquiryItem, parseBasket } from "@/lib/enquiry";
+import { createEnquiries, getFishMap, getOffer, listMapStatuses, pgCode } from "@/lib/data";
+import { normalizeImage } from "@/lib/image";
+import { type EnquiryItem, checkMapFish, parseBasket } from "@/lib/enquiry";
 import { CONTACT } from "@/lib/contact";
 import { confirmEnquiry, notifyNewEnquiry } from "@/lib/notify";
 
 const SERVER_ERROR = `Coś poszło nie tak po naszej stronie. Spróbuj jeszcze raz za chwilę albo zadzwoń: ${CONTACT.phone}.`;
 
-/** JPEG, PNG albo WebP po pierwszych bajtach; przeglądarka i tak wysyła JPEG ze stopklatki. */
-function looksLikeImage(b: Buffer) {
-  const jpeg = b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
-  const png = b.subarray(0, 4).toString("hex") === "89504e47";
-  const webp = b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP";
-  return jpeg || png || webp;
-}
-
-/**
- * Przepuszcza obrazek przez sharp: sprawdza, że to naprawdę obrazek, obraca według EXIF i zmniejsza.
- * Gdyby sharp zawiódł, a plik to zwykły JPEG/PNG/WebP (stopklatka z przeglądarki jest już zmniejszona),
- * bierzemy go bez zmian, żeby zgłoszenie klienta nie przepadło.
- */
-async function normalize(file: File): Promise<{ mime: string; data: Buffer } | null> {
-  const input = Buffer.from(await file.arrayBuffer());
-  try {
-    // Ładowany dopiero tutaj: gdyby natywna biblioteka sharp nie wczytała się na serwerze, przy imporcie
-    // na górze pliku padałaby cała trasa (goły błąd 500), a tak zgłoszenie i tak się zapisze.
-    const { default: sharp } = await import("sharp");
-    const data = await sharp(input)
-      .rotate()
-      .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 82 })
-      .toBuffer();
-    return { mime: "image/jpeg", data };
-  } catch (err) {
-    console.error("zgłoszenie: sharp nie przetworzył screenshota", { type: file.type, size: file.size, err });
-    return looksLikeImage(input) ? { mime: file.type || "image/jpeg", data: input } : null;
-  }
+/** Stopklatka do zgłoszenia, bez wymiarów (zgłoszenia ich nie potrzebują). */
+async function normalize(file: File) {
+  const img = await normalizeImage(file, 1600, "zgłoszenie");
+  return img && { mime: img.mime, data: img.data };
 }
 
 export async function POST(req: Request) {
@@ -46,6 +22,16 @@ export async function POST(req: Request) {
     const parsed = await parseBasket(form, (id) => getOffer(id));
     if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 422 });
 
+    // Ryby z mapy: numer musi być na mapie i jeszcze wolny.
+    const mapOffers = [...new Map(parsed.value.items.filter((it) => it.fishNo).map((it) => [it.offerId, it.offer])).values()];
+    const maps = new Map<string, { numbers: Set<number>; taken: Set<number> }>();
+    for (const offer of mapOffers) {
+      const [map, statuses] = await Promise.all([getFishMap(offer.id), listMapStatuses(offer)]);
+      if (map) maps.set(offer.id, { numbers: new Set(map.markers.map((m) => m.n)), taken: new Set(Object.keys(statuses).map(Number)) });
+    }
+    const fishError = checkMapFish(parsed.value.items, maps);
+    if (fishError) return NextResponse.json({ error: fishError }, { status: 409 });
+
     const items: { item: EnquiryItem; screenshots: { mime: string; data: Buffer }[] }[] = [];
     for (const it of parsed.value.items) {
       const screenshots: { mime: string; data: Buffer }[] = [];
@@ -54,14 +40,23 @@ export async function POST(req: Request) {
         if (!shot) return NextResponse.json({ error: `„${it.offer.title}”: nie udało się odczytać zdjęcia. Spróbuj z innym plikiem.` }, { status: 422 });
         screenshots.push(shot);
       }
-      items.push({ item: { offerId: it.offerId, qty: it.qty, second: it.second }, screenshots });
+      items.push({ item: { offerId: it.offerId, qty: it.qty, second: it.second, fishNo: it.fishNo ?? null }, screenshots });
     }
 
     const { contact } = parsed.value;
-    const ids = await createEnquiries(contact, items);
+    let ids: number[];
+    try {
+      ids = await createEnquiries(contact, items);
+    } catch (err) {
+      // Ktoś zarezerwował tę samą rybę z mapy dosłownie w tej samej chwili.
+      if (pgCode(err) === "23505") {
+        return NextResponse.json({ error: "Jedną z ryb z mapy ktoś właśnie zarezerwował. Odśwież stronę oferty, sprawdź, które są wolne, i wyślij jeszcze raz." }, { status: 409 });
+      }
+      throw err;
+    }
     // E-mail do sklepu wysyłamy już po odpowiedzi dla klienta: nie czeka na niego,
     // a błąd poczty (zły klucz, Resend niedostępny) tylko ląduje w logach.
-    const mailItems = parsed.value.items.map((it, i) => ({ id: ids[i], offer: it.offer, qty: it.qty, second: it.second, screenshots: items[i].screenshots }));
+    const mailItems = parsed.value.items.map((it, i) => ({ id: ids[i], offer: it.offer, qty: it.qty, second: it.second, fishNo: it.fishNo ?? null, screenshots: items[i].screenshots }));
     after(async () => {
       // Dwa maile niezależnie: błąd jednego nie blokuje drugiego.
       const results = await Promise.allSettled([notifyNewEnquiry(contact, mailItems), confirmEnquiry(contact, mailItems)]);

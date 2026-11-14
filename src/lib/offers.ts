@@ -34,6 +34,24 @@ export type Offer = {
 /** Stopklatka z rybą, którą ktoś już wybrał z filmiku; pokazujemy ją pod filmikiem. */
 export type TakenFish = { shot: number; fish: "zarezerwowana" | "sprzedana" };
 
+/** Znacznik ryby na mapie: numer i położenie jako ułamek szerokości i wysokości klatki (0–1). */
+export type MapMarker = { n: number; x: number; y: number };
+
+/** Mapa ryb oferty bez samego obrazka (obrazek jest pod /mapa/<id>?v=<version>). */
+export type FishMap = { offerId: string; width: number; height: number; markers: MapMarker[]; version: string };
+
+/** Stan ryby z mapy: brak wpisu = wolna. */
+export type MapStatus = "zarezerwowana" | "sprzedana";
+export type MapStatuses = Record<number, MapStatus>;
+
+/** Najmniejszy wolny numer dla nowej ryby na mapie (numery usuniętych ryb wracają do użycia). */
+export function nextMarkerNo(markers: MapMarker[]): number {
+  const used = new Set(markers.map((m) => m.n));
+  let n = 1;
+  while (used.has(n)) n++;
+  return n;
+}
+
 export const SIZE_FILTERS = [
   { id: "do-20", label: "do 20 cm", test: (o: Offer) => o.sizeCm[1] <= 20 },
   { id: "20-35", label: "20–35 cm", test: (o: Offer) => o.sizeCm[1] > 20 && o.sizeCm[1] <= 35 },

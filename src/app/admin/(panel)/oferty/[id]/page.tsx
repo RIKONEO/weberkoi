@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getOffer, listVarieties } from "@/lib/data";
+import { getFishMap, getOffer, listMapStatuses, listVarieties } from "@/lib/data";
+import { FishMapEditor } from "@/components/admin/FishMapEditor";
 import { OfferForm } from "@/components/admin/OfferForm";
 import { Flash } from "@/components/admin/Flash";
 import { deleteOfferAction } from "../../../actions";
@@ -14,6 +15,7 @@ export default async function EditOfferPage({ params, searchParams }: Props) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const [offer, varieties] = await Promise.all([getOffer(id, { includeHidden: true }), listVarieties()]);
   if (!offer) notFound();
+  const [map, statuses] = await Promise.all([getFishMap(offer.id, { includeHidden: true }), listMapStatuses(offer)]);
   return (
     <div className="stack admin-narrow">
       <Link href="/admin/oferty" className="back">← Oferty</Link>
@@ -23,6 +25,7 @@ export default async function EditOfferPage({ params, searchParams }: Props) {
       </div>
       <Flash saved={sp.zapisano} error={sp.blad} />
       <OfferForm offer={offer} varieties={varieties} />
+      <FishMapEditor offerId={offer.id} videoUrl={offer.videoUrl} initial={map} statuses={statuses} count={offer.count} sold={offer.sold} />
       <form action={deleteOfferAction} className="row">
         <input type="hidden" name="id" value={offer.id} />
         <button type="submit" className="link-btn small">Usuń ofertę</button>

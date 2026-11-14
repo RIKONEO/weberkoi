@@ -4,18 +4,20 @@ import { ENQUIRY_STATUSES, FISH_STATES, type EnquiryStatus, listRequests } from 
 import { formatPLN, plural } from "@/lib/offers";
 import { deleteEnquiryAction, setEnquiryFishAction, setEnquiryStatusAction } from "../../actions";
 import { StatusPill } from "@/components/admin/StatusPill";
+import { Flash } from "@/components/admin/Flash";
 
 export const metadata: Metadata = { title: "Zgłoszenia" };
 
-export default async function EnquiriesPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  const { status } = await searchParams;
+export default async function EnquiriesPage({ searchParams }: { searchParams: Promise<{ status?: string; blad?: string }> }) {
+  const { status, blad } = await searchParams;
   const current = status && status in ENQUIRY_STATUSES ? (status as EnquiryStatus) : undefined;
   const rows = await listRequests(current);
   return (
     <div className="stack">
       <h1 className="page-title">Zgłoszenia</h1>
+      <Flash error={blad} />
       <p className="muted small">Klient zbiera w koszyku ryby ze stopklatek (z jednego albo kilku filmików) i wysyła je w jednym zgłoszeniu. Skontaktuj się z nim, podaj cenę i numer konta albo umów odbiór z gotówką, potem zmień status.</p>
-      <p className="muted small">Ryba z nowego zgłoszenia od razu pokazuje się pod filmikiem jako <b>zarezerwowana</b>. Stan ustawiasz osobno dla każdej ryby: po sprzedaży kliknij „Sprzedana”, a jeśli klient zrezygnuje albo zdjęcie nie nadaje się do pokazania, kliknij „Wolna”: zniknie ze strony.</p>
+      <p className="muted small">Ryba z nowego zgłoszenia od razu pokazuje się pod filmikiem jako <b>zarezerwowana</b>. Ryba wybrana z mapy pod filmikiem robi się na mapie żółta, po „Sprzedana” szara, a po „Wolna” znowu zielona. Stan ustawiasz osobno dla każdej ryby: po sprzedaży kliknij „Sprzedana”, a jeśli klient zrezygnuje albo zdjęcie nie nadaje się do pokazania, kliknij „Wolna”: zniknie ze strony.</p>
       <div className="row">
         <Link className="chip" aria-pressed={!current} href="/admin/zapytania">Wszystkie</Link>
         {Object.entries(ENQUIRY_STATUSES).map(([k, v]) => (
@@ -60,7 +62,7 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
                       <div className="enq-item__body">
                         <Link href={`/admin/oferty/${it.offerId}`}><b>{items.length > 1 && `${n + 1}. `}{offerTitle ?? it.offerId}</b></Link>
                         <div className="small">
-                          {it.picks?.length ? `Ryby nr ${it.picks.join(", ")}` : `${it.qty} szt.`}
+                          {it.fishNo ? <b>Ryba nr {it.fishNo} z mapy</b> : it.picks?.length ? `Ryby nr ${it.picks.join(", ")}` : `${it.qty} szt.`}
                           {price ? ` · ${formatPLN(price)} za sztukę` : " · cena do ustalenia"}
                           {it.second && ` · widać ją w ${it.second}`}
                         </div>

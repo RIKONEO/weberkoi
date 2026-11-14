@@ -1,12 +1,12 @@
 // Dostęp do bazy dla sklepu i panelu. Tylko po stronie serwera.
 import "server-only";
-import { and, asc, desc, eq, gte, inArray, sql as dsql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, sql as dsql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import type { Offer, TakenFish } from "./offers";
+import type { FishMap, MapMarker, MapStatuses, Offer, TakenFish } from "./offers";
 import type { Contact, EnquiryItem } from "./enquiry";
 import { randomUUID } from "node:crypto";
 
-const { offers, orderItems, enquiries, enquiryScreenshots, varieties } = schema;
+const { offers, orderItems, enquiries, enquiryScreenshots, varieties, fishMaps } = schema;
 type OfferRow = typeof offers.$inferSelect;
 
 function toOffer(r: OfferRow): Offer {
@@ -56,7 +56,10 @@ export async function createEnquiries(contact: Contact, items: { item: EnquiryIt
   return db.transaction(async (tx) => {
     const ids: number[] = [];
     for (const { item, screenshots } of items) {
-      const [row] = await tx.insert(enquiries).values({ ...contact, ...item, picks: null, basket }).returning({ id: enquiries.id });
+      const [row] = await tx
+        .insert(enquiries)
+        .values({ ...contact, ...item, fishNo: item.fishNo ?? null, picks: null, basket })
+        .returning({ id: enquiries.id });
       if (screenshots.length) await tx.insert(enquiryScreenshots).values(screenshots.map((s) => ({ enquiryId: row.id, ...s })));
       ids.push(row.id);
     }
@@ -150,9 +153,79 @@ export async function listTakenFish(offerId: string): Promise<TakenFish[]> {
     .select({ shot: enquiryScreenshots.id, fish: enquiries.fish })
     .from(enquiryScreenshots)
     .innerJoin(enquiries, eq(enquiries.id, enquiryScreenshots.enquiryId))
-    .where(and(eq(enquiries.offerId, offerId), inArray(enquiries.fish, TAKEN)))
+    // Ryby wybrane z mapy widać już na mapie (kolorem), więc nie powtarzamy ich w galerii.
+    .where(and(eq(enquiries.offerId, offerId), inArray(enquiries.fish, TAKEN), isNull(enquiries.fishNo)))
     .orderBy(desc(enquiries.createdAt), asc(enquiryScreenshots.id));
   return rows as TakenFish[];
+}
+
+// --- mapa ryb ---
+
+/** Kod błędu Postgresa (drizzle opakowuje błąd sterownika w `cause`). */
+export function pgCode(err: unknown): string | undefined {
+  const e = err as { code?: string; cause?: { code?: string } } | undefined;
+  return e?.code ?? e?.cause?.code;
+}
+
+/** Mapa ryb oferty (bez obrazka). Dla ukrytej oferty tylko z `includeHidden` (panel). */
+export async function getFishMap(offerId: string, { includeHidden = false } = {}): Promise<FishMap | undefined> {
+  const [r] = await db
+    .select({ width: fishMaps.width, height: fishMaps.height, markers: fishMaps.markers, updatedAt: fishMaps.updatedAt, published: offers.published })
+    .from(fishMaps)
+    .innerJoin(offers, eq(offers.id, fishMaps.offerId))
+    .where(eq(fishMaps.offerId, offerId));
+  if (!r || (!includeHidden && !r.published)) return undefined;
+  const markers = [...r.markers].sort((a, b) => a.n - b.n);
+  return { offerId, width: r.width, height: r.height, markers, version: String(r.updatedAt.getTime()) };
+}
+
+/** Obrazek mapy; dla klientów tylko z widocznej oferty. */
+export async function getFishMapImage(offerId: string, { includeHidden = false } = {}) {
+  const [r] = await db
+    .select({ mime: fishMaps.mime, data: fishMaps.data, published: offers.published })
+    .from(fishMaps)
+    .innerJoin(offers, eq(offers.id, fishMaps.offerId))
+    .where(eq(fishMaps.offerId, offerId));
+  return r && (includeHidden || r.published) ? r : undefined;
+}
+
+/**
+ * Zapisuje mapę: nową klatkę (opcjonalnie, gdy Marcin zmienia tylko znaczniki, zostaje stara)
+ * i znaczniki ryb. Z `setCount` liczba ryb w ofercie staje się liczbą ryb na mapie.
+ */
+export async function saveFishMap(
+  offerId: string,
+  input: { image?: { mime: string; data: Buffer; width: number; height: number }; markers: MapMarker[]; setCount?: boolean },
+) {
+  await db.transaction(async (tx) => {
+    const now = new Date();
+    if (input.image) {
+      const values = { offerId, ...input.image, markers: input.markers, updatedAt: now };
+      await tx.insert(fishMaps).values(values).onConflictDoUpdate({ target: fishMaps.offerId, set: { ...input.image, markers: input.markers, updatedAt: now } });
+    } else {
+      await tx.update(fishMaps).set({ markers: input.markers, updatedAt: now }).where(eq(fishMaps.offerId, offerId));
+    }
+    if (input.setCount && input.markers.length) await tx.update(offers).set({ count: input.markers.length }).where(eq(offers.id, offerId));
+  });
+}
+
+export async function deleteFishMap(offerId: string) {
+  await db.delete(fishMaps).where(eq(fishMaps.offerId, offerId));
+}
+
+/**
+ * Stan ryb z mapy: zarezerwowane i sprzedane ze zgłoszeń oraz numery wpisane ręcznie
+ * w ofercie jako sprzedane. Ryby, których tu nie ma, są wolne.
+ */
+export async function listMapStatuses(offer: Pick<Offer, "id" | "sold">): Promise<MapStatuses> {
+  const rows = await db
+    .select({ n: enquiries.fishNo, fish: enquiries.fish })
+    .from(enquiries)
+    .where(and(eq(enquiries.offerId, offer.id), isNotNull(enquiries.fishNo), inArray(enquiries.fish, TAKEN)));
+  const out: MapStatuses = {};
+  for (const r of rows) if (r.n != null && out[r.n] !== "sprzedana") out[r.n] = r.fish as "zarezerwowana" | "sprzedana";
+  for (const n of offer.sold) out[n] = "sprzedana";
+  return out;
 }
 
 /** Stopklatka dla wszystkich, ale tylko gdy ryba jest zarezerwowana albo sprzedana, a oferta widoczna. */

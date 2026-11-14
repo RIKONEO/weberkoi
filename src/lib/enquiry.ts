@@ -22,7 +22,7 @@ type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 /** Dane klienta wspólne dla wszystkich ryb ze zgłoszenia. */
 export type Contact = { name: string; email: string; phone: string; message: string };
 /** Jedna ryba ze zgłoszenia. */
-export type EnquiryItem = { offerId: string; qty: number; second: string };
+export type EnquiryItem = { offerId: string; qty: number; second: string; fishNo?: number | null };
 /** Jeden wiersz w bazie: ryba z danymi klienta. */
 export type Enquiry = EnquiryItem & Contact;
 
@@ -41,10 +41,15 @@ function images(v: FormDataEntryValue[]): File[] {
  * Starszy formularz z jedną rybą (offerId, qty, second, screenshot) też przechodzi, np. z karty
  * otwartej przed aktualizacją strony.
  */
-function rawItems(f: FormData): { offerId: string; qty: number; second: string; files: File[] }[] | null {
+function fishNo(v: unknown): number | null {
+  const n = Number(v);
+  return v != null && v !== "" && Number.isInteger(n) && n >= 1 && n <= 999 ? n : null;
+}
+
+function rawItems(f: FormData): { offerId: string; qty: number; second: string; fishNo: number | null; files: File[] }[] | null {
   const json = f.get("items");
   if (typeof json !== "string") {
-    return [{ offerId: str(f.get("offerId")), qty: Number(f.get("qty") ?? 1), second: str(f.get("second"), 10), files: images(f.getAll("screenshot")) }];
+    return [{ offerId: str(f.get("offerId")), qty: Number(f.get("qty") ?? 1), second: str(f.get("second"), 10), fishNo: null, files: images(f.getAll("screenshot")) }];
   }
   let list: unknown;
   try {
@@ -55,7 +60,9 @@ function rawItems(f: FormData): { offerId: string; qty: number; second: string; 
   if (!Array.isArray(list)) return null;
   return list.map((it, i) => {
     const o = (it ?? {}) as Record<string, unknown>;
-    return { offerId: str(o.offerId), qty: Number(o.qty ?? 1), second: str(o.second, 10), files: images(f.getAll(`shot-${i}`)) };
+    const no = fishNo(o.fishNo);
+    // Ryba z mapy to zawsze jedna, konkretna ryba.
+    return { offerId: str(o.offerId), qty: no ? 1 : Number(o.qty ?? 1), second: str(o.second, 10), fishNo: no, files: images(f.getAll(`shot-${i}`)) };
   });
 }
 
@@ -71,6 +78,28 @@ export function parseContact(f: FormData): Result<Contact> {
 }
 
 /** `getOffer` podaje ofertę po id (tylko widoczne w sklepie). */
+/**
+ * Sprawdza ryby wybrane z mapy: czy taki numer jest na mapie, czy nikt go nie zarezerwował
+ * i czy klient nie dodał tej samej ryby dwa razy. Zwraca komunikat błędu albo null.
+ */
+export function checkMapFish(
+  items: ParsedItem[],
+  maps: Map<string, { numbers: Set<number>; taken: Set<number> }>,
+): string | null {
+  const seen = new Set<string>();
+  for (const it of items) {
+    if (!it.fishNo) continue;
+    const map = maps.get(it.offerId);
+    const who = `„${it.offer.title}”, ryba nr ${it.fishNo}`;
+    if (!map || !map.numbers.has(it.fishNo)) return `${who}: tej ryby nie ma już na mapie. Usuń ją z koszyka i wybierz jeszcze raz.`;
+    if (map.taken.has(it.fishNo)) return `${who}: ktoś właśnie ją zarezerwował. Usuń ją z koszyka i wybierz inną wolną rybę.`;
+    const key = `${it.offerId}#${it.fishNo}`;
+    if (seen.has(key)) return `${who} jest w koszyku dwa razy. Usuń jedną.`;
+    seen.add(key);
+  }
+  return null;
+}
+
 export async function parseBasket(
   f: FormData,
   getOffer: (id: string) => Promise<Offer | undefined>,
@@ -100,7 +129,7 @@ export async function parseBasket(
     if (left === 0) return { ok: false, error: `„${offer.title}”: wszystkie ryby z tej grupy są już sprzedane. Usuń je z koszyka.` };
     if (sum > left) return { ok: false, error: `„${offer.title}”: zostało tylko ${left} ${plural(left, "ryba", "ryby", "ryb")}, a w koszyku jest ${sum}. Zmniejsz liczbę.` };
     perOffer.set(offer.id, sum);
-    items.push({ offerId: offer.id, qty: it.qty, second: it.second, offer, files: it.files });
+    items.push({ offerId: offer.id, qty: it.qty, second: it.second, fishNo: it.fishNo, offer, files: it.files });
   }
 
   const contact = parseContact(f);
