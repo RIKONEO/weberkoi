@@ -68,7 +68,8 @@ export async function saveOfferAction(form: FormData) {
   }
   await saveOffer(parsed.value, existingId);
   refreshShop(parsed.value.id);
-  redirect(`/admin/oferty/${parsed.value.id}?zapisano=1`);
+  // Po dodaniu nowej oferty od razu pokazujemy mapę ryb (da się ją zrobić dopiero dla zapisanej oferty).
+  redirect(`/admin/oferty/${parsed.value.id}?zapisano=1${existingId ? "" : "&nowa=1"}`);
 }
 
 export async function deleteOfferAction(form: FormData) {

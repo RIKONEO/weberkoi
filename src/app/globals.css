@@ -405,3 +405,4 @@ a.kpi:hover { border-color: var(--paper-2); }
 @media (max-width: 520px) { .fishmap__bar > .btn { flex: 1 1 100%; } }
 .mapedit__stage { cursor: crosshair; touch-action: manipulation; }
 .mapedit .video video { object-fit: contain; background: #000; }
+.mapedit { scroll-margin-top: 140px; }

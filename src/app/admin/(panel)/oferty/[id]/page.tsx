@@ -7,7 +7,7 @@ import { OfferForm } from "@/components/admin/OfferForm";
 import { Flash } from "@/components/admin/Flash";
 import { deleteOfferAction } from "../../../actions";
 
-type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ zapisano?: string; blad?: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ zapisano?: string; blad?: string; nowa?: string }> };
 
 export const metadata: Metadata = { title: "Edycja oferty" };
 
@@ -21,11 +21,14 @@ export default async function EditOfferPage({ params, searchParams }: Props) {
       <Link href="/admin/oferty" className="back">← Oferty</Link>
       <div className="row row--between">
         <h1 className="page-title">{offer.title}</h1>
-        {offer.published && <Link href={`/oferta/${offer.id}`} target="_blank" className="btn">Zobacz w sklepie ↗</Link>}
+        <div className="row">
+          <a href="#mapa" className="btn">Mapa ryb ↓</a>
+          {offer.published && <Link href={`/oferta/${offer.id}`} target="_blank" className="btn">Zobacz w sklepie ↗</Link>}
+        </div>
       </div>
       <Flash saved={sp.zapisano} error={sp.blad} />
       <OfferForm offer={offer} varieties={varieties} />
-      <FishMapEditor offerId={offer.id} videoUrl={offer.videoUrl} initial={map} statuses={statuses} count={offer.count} sold={offer.sold} />
+      <FishMapEditor offerId={offer.id} videoUrl={offer.videoUrl} initial={map} statuses={statuses} count={offer.count} sold={offer.sold} scrollIntoView={sp.nowa === "1"} />
       <form action={deleteOfferAction} className="row">
         <input type="hidden" name="id" value={offer.id} />
         <button type="submit" className="link-btn small">Usuń ofertę</button>
