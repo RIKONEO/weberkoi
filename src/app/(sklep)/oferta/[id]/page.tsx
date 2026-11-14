@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OfferPicker } from "@/components/OfferPicker";
-import { getOffer, listTakenFish } from "@/lib/data";
+import { getFishMap, getOffer, listMapStatuses, listTakenFish } from "@/lib/data";
 import { available, formatPLN, offerSummary, sizeLabel } from "@/lib/offers";
 import { OPEN_GRAPH_BASE } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function OfferPage({ params }: Props) {
   const offer = await getOffer((await params).id);
   if (!offer) notFound();
-  const taken = await listTakenFish(offer.id);
+  const [taken, map, statuses] = await Promise.all([listTakenFish(offer.id), getFishMap(offer.id), listMapStatuses(offer)]);
   return (
     <div className="wrap section">
       <JsonLd data={offerSchema(offer)} />
@@ -36,6 +36,8 @@ export default async function OfferPage({ params }: Props) {
       <OfferPicker
         offer={offer}
         taken={taken}
+        map={map}
+        statuses={statuses}
         details={
           <>
             <div>

@@ -43,12 +43,15 @@ export function OfferEnquiry({
   offer,
   taken = [],
   frameGrab = false,
+  hasMap = false,
   ref,
 }: {
   offer: Offer;
   /** Ryby z tego filmiku już zarezerwowane albo sprzedane. */
   taken?: TakenFish[];
   frameGrab?: boolean;
+  /** Oferta ma mapę ryb: klient wybiera rybę na mapie, a screenshot zostaje na wszelki wypadek. */
+  hasMap?: boolean;
   ref?: React.Ref<EnquiryHandle>;
 }) {
   const cart = useCart();
@@ -152,7 +155,15 @@ export function OfferEnquiry({
           </div>
         </div>
       )}
-      {!shot && canPick && (
+      {!shot && canPick && hasMap && (
+        <ol className="howto small">
+          <li>Pod filmikiem jest mapa ryb z numerami. Stuknij w <b>zieloną</b> (wolną) rybę i dodaj ją do koszyka.</li>
+          <li>Żółte ktoś już zarezerwował, szare są sprzedane. Na filmiku zobaczysz, jak wybrana ryba pływa.</li>
+          <li>Wybierz tak kolejne ryby, też z innych filmików, i wyślij jedno zgłoszenie z koszyka. Resztę ustalimy z Tobą sami.</li>
+        </ol>
+      )}
+      {!shot && canPick && hasMap && <p className="small muted">Twojej ryby nie ma na mapie? Dodaj screenshot z filmiku:</p>}
+      {!shot && canPick && !hasMap && (
         <ol className="howto small">
           {frameGrab ? (
             <li>Kliknij „Zrób stopklatkę” pod filmikiem i suwakiem wybierz moment, w którym dobrze widać rybę. Możesz też dodać własny screenshot.</li>

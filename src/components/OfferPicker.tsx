@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { type Offer, type TakenFish, available } from "@/lib/offers";
+import { type FishMap as FishMapData, type MapStatuses, type Offer, type TakenFish, available } from "@/lib/offers";
 import { OfferVideo } from "./OfferVideo";
 import { OfferEnquiry, type EnquiryHandle } from "./OfferEnquiry";
 import { TakenGallery } from "./TakenFish";
+import { FishMap } from "./FishMap";
 
 function clock(t: number) {
   const s = Math.floor(t);
@@ -70,7 +71,20 @@ async function ensureFrame(v: HTMLVideoElement) {
  * Filmik oferty z przyciskiem „Zrób stopklatkę” i formularzem zgłoszenia obok. Stopklatka trafia
  * prosto do formularza, więc klient nie musi robić i wgrywać zrzutu ekranu.
  */
-export function OfferPicker({ offer, taken, details }: { offer: Offer; taken: TakenFish[]; details: React.ReactNode }) {
+export function OfferPicker({
+  offer,
+  taken,
+  details,
+  map,
+  statuses = {},
+}: {
+  offer: Offer;
+  taken: TakenFish[];
+  details: React.ReactNode;
+  /** Wspólna mapa ryb; gdy jest, zastępuje „Zrób stopklatkę”. */
+  map?: FishMapData;
+  statuses?: MapStatuses;
+}) {
   const video = useRef<HTMLVideoElement>(null);
   const enquiry = useRef<EnquiryHandle>(null);
   // Klatkę da się odczytać tylko, gdy serwer z filmikami pozwala (CORS). Jeśli nie pozwala,
@@ -82,7 +96,8 @@ export function OfferPicker({ offer, taken, details }: { offer: Offer; taken: Ta
   useEffect(() => {
     if (cors && video.current?.error) setCors(false);
   }, [cors]);
-  const canGrab = Boolean(offer.videoUrl) && cors && available(offer) > 0;
+  const hasMap = Boolean(map && map.markers.length);
+  const canGrab = !hasMap && Boolean(offer.videoUrl) && cors && available(offer) > 0;
 
   // Tryb wyboru klatki: duży suwak i przyciski klatka po klatce, wygodne na telefonie.
   const [picking, setPicking] = useState(false);
@@ -225,16 +240,20 @@ export function OfferPicker({ offer, taken, details }: { offer: Offer; taken: Ta
           </div>
         )}
         {note && <p className="notice notice--warn small" role="status">{note}</p>}
+        {hasMap && map ? (
+          <FishMap offer={offer} map={map} statuses={statuses} />
+        ) : (
         <p className="muted small">
           {canGrab
             ? "Podoba Ci się ryba? Kliknij „Zrób stopklatkę”, wybierz moment z rybą, stuknij w nią i dodaj do koszyka."
             : "Podoba Ci się ryba? Zatrzymaj filmik, zrób screenshot i dodaj go w formularzu obok do koszyka."}
         </p>
+        )}
         <TakenGallery taken={taken} />
       </div>
       <div className="stack">
         {details}
-        <OfferEnquiry offer={offer} taken={taken} frameGrab={canGrab} ref={enquiry} />
+        <OfferEnquiry offer={offer} taken={taken} frameGrab={canGrab} hasMap={hasMap} ref={enquiry} />
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ const MAX_ATTACH_BYTES = 15 * 1024 * 1024;
 /** Nadawca testowy Resend: działa bez własnej domeny, ale dostarcza tylko na adres właściciela konta. */
 const TEST_FROM = `${SITE_NAME} <onboarding@resend.dev>`;
 
-export type NotifyItem = { id: number; offer: Offer; qty: number; second: string; screenshots: { mime: string; data: Buffer }[] };
+export type NotifyItem = { id: number; offer: Offer; qty: number; second: string; fishNo?: number | null; screenshots: { mime: string; data: Buffer }[] };
 type Attachment = { filename: string; content: string; content_id: string };
 
 const ryb = (n: number) => plural(n, "ryba", "ryby", "ryb");
@@ -65,7 +65,7 @@ function summary(items: NotifyItem[]) {
 }
 
 const itemLine = (it: NotifyItem) =>
-  [`${it.qty} szt.`, it.offer.price ? `${formatPLN(it.offer.price)} za sztukę` : "cena do ustalenia", it.second && `widać ją w ${it.second}`].filter(Boolean).join(" · ");
+  [it.fishNo ? `ryba nr ${it.fishNo} z mapy` : `${it.qty} szt.`, it.offer.price ? `${formatPLN(it.offer.price)} za sztukę` : "cena do ustalenia", it.second && `widać ją w ${it.second}`].filter(Boolean).join(" · ");
 
 function fishList(items: NotifyItem[], cids: string[][]) {
   return items
