@@ -3,6 +3,8 @@
 
 export const SESSION_COOKIE = "wk_admin";
 export const SESSION_DAYS = 7;
+/** Wstęp na stronę sklepu, gdy jest zablokowana hasłem (patrz src/lib/site-lock.ts). */
+export const SITE_COOKIE = "wk_wstep";
 
 const enc = new TextEncoder();
 
@@ -21,17 +23,18 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-export async function createSessionToken(now = Date.now()): Promise<string> {
+// „scope” oddziela ciasteczko wstępu na stronę od ciasteczka panelu: jednego nie da się użyć jako drugiego.
+export async function createSessionToken(now = Date.now(), scope = ""): Promise<string> {
   const exp = String(now + SESSION_DAYS * 24 * 3600 * 1000);
-  return `${exp}.${await hmac(exp)}`;
+  return `${exp}.${await hmac(scope + exp)}`;
 }
 
-export async function verifySessionToken(token: string | undefined, now = Date.now()): Promise<boolean> {
+export async function verifySessionToken(token: string | undefined, now = Date.now(), scope = ""): Promise<boolean> {
   if (!token) return false;
   const [exp, sig] = token.split(".");
   if (!exp || !sig || !(Number(exp) > now)) return false;
   try {
-    return safeEqual(sig, await hmac(exp));
+    return safeEqual(sig, await hmac(scope + exp));
   } catch {
     return false;
   }

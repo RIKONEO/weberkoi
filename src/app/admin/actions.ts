@@ -25,6 +25,7 @@ import {
   pgCode,
 } from "@/lib/data";
 import { parseOfferForm, parseVarietyName } from "@/lib/offerForm";
+import { setSiteCookie } from "../wejscie/actions";
 
 export async function requireAdmin() {
   const jar = await cookies();
@@ -43,6 +44,8 @@ export async function login(form: FormData) {
     path: "/admin",
     maxAge: SESSION_DAYS * 24 * 3600,
   });
+  // Zalogowany admin widzi też sklep, gdy strona jest zablokowana hasłem.
+  await setSiteCookie();
   redirect("/admin");
 }
 
