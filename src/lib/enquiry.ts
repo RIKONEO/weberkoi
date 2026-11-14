@@ -71,7 +71,7 @@ export function parseContact(f: FormData): Result<Contact> {
   const email = str(f.get("email"), 120);
   const phone = str(f.get("phone"), 30);
   if (!name) return { ok: false, error: "Podaj imię." };
-  if (!phone) return { ok: false, error: "Podaj numer telefonu: wyślemy na niego SMS z potwierdzeniem rezerwacji." };
+  if (!phone) return { ok: false, error: "Podaj numer telefonu: zadzwonimy, żeby potwierdzić rezerwację i umówić odbiór." };
   if (phone.replace(/\D/g, "").length < 9) return { ok: false, error: "Podaj pełny numer telefonu (9 cyfr)." };
   if (email && !EMAIL.test(email)) return { ok: false, error: "Podaj poprawny adres e-mail." };
   return { ok: true, value: { name, email, phone, message: str(f.get("message"), 1000) } };

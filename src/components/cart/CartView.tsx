@@ -114,7 +114,7 @@ export function CartView() {
     return (
       <div className="panel">
         <p className="notice" role="status">
-          Dziękujemy, ryby są zarezerwowane. Zadzwonimy albo napiszemy SMS-a, potwierdzimy ryby i cenę, i umówimy odbiór osobisty w Zakrzewie.
+          Dziękujemy, ryby są zarezerwowane. Zadzwonimy, potwierdzimy ryby i cenę, i umówimy odbiór osobisty w Zakrzewie.
           <br />
           <b>Odbierz ryby najpóźniej {sentTo}.</b> Po tym terminie wracają do sprzedaży.
         </p>
@@ -174,7 +174,7 @@ export function CartView() {
             <input id="enq-email" type="email" value={form.email} onChange={set("email")} autoComplete="email" />
           </label>
         </div>
-        <p className="muted small">Na telefon wyślemy SMS z potwierdzeniem rezerwacji. Na e-mail wyślemy potwierdzenie ze zdjęciami ryb.</p>
+        <p className="muted small">Zadzwonimy, żeby potwierdzić rezerwację i umówić odbiór. Na e-mail wyślemy potwierdzenie ze zdjęciami ryb.</p>
         <label className="field">
           Wiadomość (opcjonalnie)
           <textarea id="enq-message" rows={3} value={form.message} onChange={set("message")} placeholder="np. mogę przyjechać w sobotę" />

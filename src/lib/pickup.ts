@@ -1,4 +1,4 @@
-// Termin odbioru zarezerwowanych ryb. Wspólne dla sklepu, maili, SMS-ów i panelu.
+// Termin odbioru zarezerwowanych ryb. Wspólne dla sklepu, maili i panelu.
 
 /** Tyle dni klient ma na odbiór ryb od wysłania zgłoszenia. Potem ryby mogą wrócić do sprzedaży. */
 export const PICKUP_DAYS = 14;
