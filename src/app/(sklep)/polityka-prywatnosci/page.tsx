@@ -22,7 +22,7 @@ export default function PrivacyPage() {
 
       <h2>Jakie dane zbieramy</h2>
       <p>
-        W zgłoszeniu podajesz imię, telefon albo e-mail, opcjonalnie wiadomość, oraz stopklatkę lub screenshot z naszego filmiku z zaznaczoną
+        W zgłoszeniu podajesz imię i telefon, opcjonalnie e-mail i wiadomość, oraz stopklatkę lub screenshot z naszego filmiku z zaznaczoną
         rybą. Zapisujemy też datę zgłoszenia. Nie prosimy o adres ani dane do płatności.
       </p>
 
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
       <p>
         Dane są nam potrzebne, żeby odpowiedzieć na zgłoszenie, potwierdzić rybę, umówić odbiór i sprzedać rybę (art. 6 ust. 1 lit. b RODO,
         działania przed zawarciem umowy i jej wykonanie). Jeśli dojdzie do sprzedaży, przechowujemy dane potrzebne do rozliczeń, bo wymagają
-        tego przepisy podatkowe (art. 6 ust. 1 lit. c RODO). Podanie danych jest dobrowolne, ale bez telefonu albo e-maila nie mamy jak Ci odpisać.
+        tego przepisy podatkowe (art. 6 ust. 1 lit. c RODO). Podanie danych jest dobrowolne, ale bez numeru telefonu nie przyjmiemy rezerwacji: wysyłamy na niego SMS z potwierdzeniem i dzwonimy w sprawie odbioru.
       </p>
 
       <h2>Stopklatka pod filmikiem</h2>
@@ -50,7 +50,7 @@ export default function PrivacyPage() {
       <h2>Kto jeszcze ma dostęp</h2>
       <p>
         Dane widzi tylko sprzedawca. Technicznie przechowują je firmy, które obsługują stronę na nasze zlecenie: hosting strony (Vercel), baza
-        danych (Neon) i serwer filmików (Bunny.net). Część z nich działa poza Europejskim Obszarem Gospodarczym; wtedy dane są chronione
+        danych (Neon), serwer filmików (Bunny.net), wysyłka e-maili (Resend) i SMS-ów (SMSAPI.pl). Część z nich działa poza Europejskim Obszarem Gospodarczym; wtedy dane są chronione
         standardowymi klauzulami umownymi zatwierdzonymi przez Komisję Europejską. Nie sprzedajemy danych i nie używamy ich do reklam.
       </p>
 

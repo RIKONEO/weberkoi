@@ -4,6 +4,7 @@ import { normalizeImage } from "@/lib/image";
 import { type EnquiryItem, checkMapFish, parseBasket } from "@/lib/enquiry";
 import { CONTACT } from "@/lib/contact";
 import { confirmEnquiry, notifyNewEnquiry } from "@/lib/notify";
+import { sendReservationSms } from "@/lib/sms";
 
 const SERVER_ERROR = `Coś poszło nie tak po naszej stronie. Spróbuj jeszcze raz za chwilę albo zadzwoń: ${CONTACT.phone}.`;
 
@@ -58,10 +59,12 @@ export async function POST(req: Request) {
     // a błąd poczty (zły klucz, Resend niedostępny) tylko ląduje w logach.
     const mailItems = parsed.value.items.map((it, i) => ({ id: ids[i], offer: it.offer, qty: it.qty, second: it.second, fishNo: it.fishNo ?? null, screenshots: items[i].screenshots }));
     after(async () => {
-      // Dwa maile niezależnie: błąd jednego nie blokuje drugiego.
-      const results = await Promise.allSettled([notifyNewEnquiry(contact, mailItems), confirmEnquiry(contact, mailItems)]);
+      // Maile i SMS niezależnie: błąd jednego nie blokuje pozostałych.
+      const sms = mailItems.map((it) => ({ title: it.offer.title, fishNo: it.fishNo, qty: it.qty }));
+      const results = await Promise.allSettled([notifyNewEnquiry(contact, mailItems), confirmEnquiry(contact, mailItems), sendReservationSms(contact.phone, sms)]);
+      const what = ["e-mail do sklepu", "e-mail do klienta", "SMS do klienta"];
       results.forEach((r, i) => {
-        if (r.status === "rejected") console.error(`zgłoszenie: e-mail ${i ? "do klienta" : "do sklepu"} nie wysłany`, { ids, err: r.reason });
+        if (r.status === "rejected") console.error(`zgłoszenie: ${what[i]} nie wysłany`, { ids, err: r.reason });
       });
     });
     return NextResponse.json({ ok: true });

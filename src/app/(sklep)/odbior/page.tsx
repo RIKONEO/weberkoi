@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CONTACT } from "@/lib/contact";
+import { PICKUP_TEXT } from "@/lib/pickup";
 
 export const metadata: Metadata = {
   title: "Odbiór osobisty",
@@ -25,6 +26,10 @@ export default function PickupPage() {
           <a href={CONTACT.phoneHref}>{CONTACT.phone}</a> ({CONTACT.person})
         </dd>
       </dl>
+      <p className="notice notice--warn">
+        <b>Na odbiór masz {PICKUP_TEXT} od wysłania zgłoszenia.</b> Tyle trzymamy dla Ciebie zarezerwowane ryby. Jeśli w tym czasie ich
+        nie odbierzesz, wracają do sprzedaży. Potrzebujesz więcej czasu? Zadzwoń, na pewno się dogadamy.
+      </p>
       <p>
         Termin odbioru ustalimy z Tobą po zgłoszeniu albo telefonicznie. Rybę pakujemy na miejscu w worek z tlenem, więc spokojnie
         dowieziesz ją do swojego stawu.

@@ -3,6 +3,7 @@
 // Bez RESEND_API_KEY nic nie wysyłamy; zgłoszenie i tak jest w panelu /admin/zapytania.
 // Błąd wysyłki nigdy nie psuje zgłoszenia klienta: wołający łapie go i zapisuje w logach Vercela.
 import "server-only";
+import { PICKUP_TEXT, formatDay, pickupDeadline } from "./pickup";
 import type { Contact } from "./enquiry";
 import { formatPLN, plural, type Offer } from "./offers";
 import { CONTACT } from "./contact";
@@ -90,6 +91,7 @@ export async function notifyNewEnquiry(e: Contact, items: NotifyItem[]) {
     ["Imię", esc(e.name)],
     ...(e.phone ? [["Telefon", `<a href="${telHref}" style="color:${C.hi};text-decoration:none">${esc(e.phone)}</a>`] as [string, string]] : []),
     ...(e.email ? [["E-mail", `<a href="mailto:${esc(e.email)}" style="color:${C.hi};text-decoration:none">${esc(e.email)}</a>`] as [string, string]] : []),
+    ["Odbiór do", esc(formatDay(pickupDeadline()))],
     ...(items.length > 1 || total ? [["Razem", esc(`${fish} ${ryb(fish)}, ${totalText}`)] as [string, string]] : []),
   ];
 
@@ -155,7 +157,7 @@ export async function confirmEnquiry(e: Contact, items: NotifyItem[]) {
   const steps = [
     ["Oddzwonimy albo odpiszemy", `${CONTACT.person} potwierdzi z Tobą rybę, cenę i termin odbioru.`],
     ["Płatność", "Przelewem albo gotówką przy odbiorze. Na stronie niczego nie płacisz."],
-    ["Odbiór osobisty", `${CONTACT.street}, ${CONTACT.city}. Rybę pakujemy na miejscu.`],
+    ["Odbiór osobisty", `Najpóźniej ${formatDay(pickupDeadline())} (${PICKUP_TEXT} od zgłoszenia), ${CONTACT.street}, ${CONTACT.city}. Rybę pakujemy na miejscu. Po tym terminie ryby wracają do sprzedaży.`],
   ];
   const stepsHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${steps
     .map(

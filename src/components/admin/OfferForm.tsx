@@ -49,6 +49,11 @@ export function OfferForm({ offer, varieties }: { offer?: Offer; varieties: stri
       </fieldset>
       <label className="opt"><input type="checkbox" id="published" name="published" defaultChecked={offer?.published ?? true} /><span>Widoczna w sklepie</span></label>
       <label className="opt"><input type="checkbox" id="featured" name="featured" defaultChecked={offer?.featured ?? false} /><span>Wyróżniona<small>Pokazujemy ją na górze strony głównej i katalogu z etykietą „Polecamy”.</small></span></label>
+      {!offer && (
+        <p className="notice small">
+          <b>Mapa ryb:</b> po kliknięciu „Dodaj ofertę” otworzy się strona oferty z sekcją „Mapa ryb pod filmikiem”. Tam wybierzesz klatkę z filmiku i stukniesz w każdą rybę.
+        </p>
+      )}
       <div><button type="submit" className="btn btn--primary">{offer ? "Zapisz zmiany" : "Dodaj ofertę"}</button></div>
     </form>
   );

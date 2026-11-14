@@ -5,6 +5,7 @@ import { formatPLN, plural } from "@/lib/offers";
 import { deleteEnquiryAction, setEnquiryFishAction, setEnquiryStatusAction } from "../../actions";
 import { StatusPill } from "@/components/admin/StatusPill";
 import { Flash } from "@/components/admin/Flash";
+import { formatDay, pickupDeadline } from "@/lib/pickup";
 
 export const metadata: Metadata = { title: "Zgłoszenia" };
 
@@ -41,6 +42,7 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
                   </div>
                   <StatusPill status={e.status} />
                 </div>
+                <PickupLine created={e.createdAt} open={items.some((it) => it.e.fish === "zarezerwowana")} />
                 {items.length > 1 && (
                   <div className="small">
                     <b>{fish} {plural(fish, "ryba", "ryby", "ryb")} w jednym zgłoszeniu</b>
@@ -116,4 +118,16 @@ const FISH_LABELS: Record<string, string> = FISH_STATES;
 
 function FishPill({ fish }: { fish: string }) {
   return <span className={`pill pill--${FISH_TONE[fish] ?? "mu"}`}>{FISH_LABELS[fish] ?? fish}</span>;
+}
+
+/** Termin odbioru (2 tygodnie od zgłoszenia); po terminie czerwone ostrzeżenie, póki ryby są zarezerwowane. */
+function PickupLine({ created, open }: { created: Date; open: boolean }) {
+  const by = pickupDeadline(created);
+  const late = open && by.getTime() < Date.now();
+  return (
+    <div className={late ? "notice notice--error small" : "small muted"}>
+      Odbiór do <b>{formatDay(by)}</b>
+      {late && ". Termin minął: zadzwoń do klienta albo ustaw rybom „Wolna”, żeby wróciły do sprzedaży."}
+    </div>
+  );
 }

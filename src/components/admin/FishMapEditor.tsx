@@ -36,6 +36,7 @@ export function FishMapEditor({
   statuses,
   count,
   sold = [],
+  scrollIntoView = false,
 }: {
   offerId: string;
   videoUrl?: string;
@@ -44,6 +45,8 @@ export function FishMapEditor({
   count: number;
   /** Numery wpisane w ofercie jako sprzedane: na mapie te ryby są szare. */
   sold?: number[];
+  /** Zaraz po dodaniu nowej oferty: przewijamy do mapy, żeby Marcin od razu ją zrobił. */
+  scrollIntoView?: boolean;
 }) {
   const router = useRouter();
   const [img, setImg] = useState<Img | null>(initial ? { src: `/admin/mapa/${offerId}?v=${initial.version}`, width: initial.width, height: initial.height } : null);
@@ -78,6 +81,11 @@ export function FishMapEditor({
     loop();
     return () => cancelAnimationFrame(raf);
   }, [mode, cors]);
+
+  const section = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (scrollIntoView) section.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [scrollIntoView]);
 
   // Ostrzeżenie przed wyjściem ze strony z niezapisaną mapą.
   useEffect(() => {
@@ -218,7 +226,7 @@ export function FishMapEditor({
   const taken = (n: number) => statuses[n];
 
   return (
-    <section className="panel stack mapedit" aria-labelledby="mapedit-title">
+    <section ref={section} id="mapa" className="panel stack mapedit" aria-labelledby="mapedit-title">
       <div>
         <h2 id="mapedit-title" className="panel__title">Mapa ryb pod filmikiem</h2>
         <p className="muted small">

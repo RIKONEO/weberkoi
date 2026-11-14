@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatPLN, plural } from "@/lib/offers";
 import { MAX_UPLOAD_BYTES } from "@/lib/enquiry";
 import { CONTACT } from "@/lib/contact";
+import { PICKUP_RULE, PICKUP_TEXT, formatDay, pickupDeadline } from "@/lib/pickup";
 import { type CartItem, useBlobUrl, useCart } from "./CartProvider";
 
 /** Zmniejsza stopklatkę mocniej, gdy cały koszyk nie mieści się w jednym wysłaniu. */
@@ -93,7 +94,7 @@ export function CartView() {
       return;
     }
     if (res.ok) {
-      setSentTo(form.phone ? "telefonicznie albo SMS-em" : `na ${form.email}`);
+      setSentTo(formatDay(pickupDeadline()));
       cart.clear();
       setState("sent");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -113,7 +114,9 @@ export function CartView() {
     return (
       <div className="panel">
         <p className="notice" role="status">
-          Dziękujemy, mamy Twoje zgłoszenie. Odezwiemy się {sentTo}, potwierdzimy ryby i cenę, i umówimy odbiór osobisty w Zakrzewie.
+          Dziękujemy, ryby są zarezerwowane. Zadzwonimy albo napiszemy SMS-a, potwierdzimy ryby i cenę, i umówimy odbiór osobisty w Zakrzewie.
+          <br />
+          <b>Odbierz ryby najpóźniej {sentTo}.</b> Po tym terminie wracają do sprzedaży.
         </p>
         <Link href="/katalog" className="btn">Wróć do katalogu</Link>
       </div>
@@ -164,14 +167,14 @@ export function CartView() {
         <div className="two">
           <label className="field">
             Telefon
-            <input id="enq-phone" type="tel" value={form.phone} onChange={set("phone")} autoComplete="tel" placeholder="np. 600 100 200" />
+            <input id="enq-phone" type="tel" required value={form.phone} onChange={set("phone")} autoComplete="tel" placeholder="np. 600 100 200" />
           </label>
           <label className="field">
-            E-mail
+            E-mail (opcjonalnie)
             <input id="enq-email" type="email" value={form.email} onChange={set("email")} autoComplete="email" />
           </label>
         </div>
-        <p className="muted small">Wystarczy telefon albo e-mail.</p>
+        <p className="muted small">Na telefon wyślemy SMS z potwierdzeniem rezerwacji. Na e-mail wyślemy potwierdzenie ze zdjęciami ryb.</p>
         <label className="field">
           Wiadomość (opcjonalnie)
           <textarea id="enq-message" rows={3} value={form.message} onChange={set("message")} placeholder="np. mogę przyjechać w sobotę" />
@@ -181,6 +184,7 @@ export function CartView() {
           <input tabIndex={-1} autoComplete="off" value={form.website} onChange={set("website")} />
         </label>
         {state === "error" && <p className="notice notice--error" role="alert">{error}</p>}
+        <p className="notice notice--warn small"><b>Odbiór w ciągu {PICKUP_TEXT}.</b> {PICKUP_RULE}</p>
         <p className="muted small">Nie płacisz teraz. Zapłacisz gotówką przy odbiorze albo przelewem, gdy potwierdzimy ryby.</p>
         <button type="submit" className="btn btn--primary" disabled={state === "sending"}>
           {state === "sending" ? "Wysyłanie…" : `Wyślij zgłoszenie (${cart.count} ${plural(cart.count, "ryba", "ryby", "ryb")})`}

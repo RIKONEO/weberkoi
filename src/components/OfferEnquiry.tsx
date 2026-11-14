@@ -4,6 +4,7 @@ import { useImperativeHandle, useRef, useState } from "react";
 import Link from "next/link";
 import { type Offer, type TakenFish, available, formatPLN, plural } from "@/lib/offers";
 import { MAX_ITEMS } from "@/lib/enquiry";
+import { PICKUP_RULE } from "@/lib/pickup";
 import { FishMarker } from "./FishMarker";
 import { TakenThumbs } from "./TakenFish";
 import { useBlobUrl, useCart } from "./cart/CartProvider";
@@ -226,6 +227,8 @@ export function OfferEnquiry({
         </>
       )}
       {!shot && error && <p className="notice notice--error" role="alert">{error}</p>}
+
+      <p className="small muted">{PICKUP_RULE}</p>
 
       {mine.length > 0 && !added && (
         <p className="small muted">

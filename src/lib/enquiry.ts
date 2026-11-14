@@ -4,7 +4,7 @@
 import { available, plural, type Offer } from "./offers";
 
 /** Najwięcej ryb w jednym koszyku: tyle stopklatek mieści się w jednym wysłaniu z telefonu. */
-export const MAX_ITEMS = 10;
+export const MAX_ITEMS = 20;
 /** Najwięcej zdjęć przy jednej rybie (stare formularze wysyłały do 3 screenshotów). */
 export const MAX_SHOTS_PER_ITEM = 3;
 /** Limit na plik po stronie serwera; przeglądarka i tak zmniejsza zdjęcia przed wysłaniem. */
@@ -71,8 +71,8 @@ export function parseContact(f: FormData): Result<Contact> {
   const email = str(f.get("email"), 120);
   const phone = str(f.get("phone"), 30);
   if (!name) return { ok: false, error: "Podaj imię." };
-  if (!phone && !email) return { ok: false, error: "Podaj telefon albo e-mail, żebyśmy mogli odpisać." };
-  if (phone && phone.replace(/\D/g, "").length < 9) return { ok: false, error: "Podaj pełny numer telefonu." };
+  if (!phone) return { ok: false, error: "Podaj numer telefonu: wyślemy na niego SMS z potwierdzeniem rezerwacji." };
+  if (phone.replace(/\D/g, "").length < 9) return { ok: false, error: "Podaj pełny numer telefonu (9 cyfr)." };
   if (email && !EMAIL.test(email)) return { ok: false, error: "Podaj poprawny adres e-mail." };
   return { ok: true, value: { name, email, phone, message: str(f.get("message"), 1000) } };
 }
