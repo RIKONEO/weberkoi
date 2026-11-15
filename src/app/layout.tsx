@@ -11,7 +11,6 @@ import { storeSchema } from "@/lib/schema-org";
 export const metadata: Metadata = {
   title: { default: "WEBER Nishikigoi · sklep z koi", template: "%s · WEBER Nishikigoi" },
   description: "Karpie koi z Japonii i z naszej hodowli. Każda ryba na filmiku, odbiór osobisty w Zakrzewie.",
-  icons: { icon: "/logo-320.jpg" },
   metadataBase: SITE_URL,
   openGraph: { ...OPEN_GRAPH_BASE, title: "WEBER Nishikigoi · koi na filmiku", description: "Karpie koi z Japonii i z naszej hodowli. Każda ryba na filmiku, odbiór osobisty w Zakrzewie." },
   twitter: { card: "summary_large_image" },
