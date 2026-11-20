@@ -92,7 +92,7 @@ export function PhotosField({ initial, offerId, max }: { initial: string[]; offe
         </label>
       )}
       {error && <p className="notice notice--error small" role="alert">{error}</p>}
-      <p className="muted small">Pierwsze zdjęcie jest główne: widać je w sklepie, w koszyku i w mailu. Najlepiej wychodzą zdjęcia po zmroku, z włączonym podświetleniem. Zmiany zdjęć zapisują się po kliknięciu „Zapisz”.</p>
+      <p className="muted small">Pierwsze zdjęcie jest główne: widać je w sklepie, w koszyku i w mailu. Najlepiej wychodzą zdjęcia na ciemnym tle albo z lampą za obrazem, bo wtedy widać cały wzór. Zmiany zdjęć zapisują się po kliknięciu „Zapisz”.</p>
     </fieldset>
   );
 }

@@ -9,7 +9,7 @@ export function ArtCard({ offer }: { offer: Offer }) {
       <div className="tile__media art-tile__media">
         {offer.photos[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={offer.photos[0]} alt={`Podświetlany obraz ze stali: ${offer.title}`} loading="lazy" />
+          <img src={offer.photos[0]} alt={`Obraz ze stali z motywem koi: ${offer.title}`} loading="lazy" />
         ) : (
           <span className="muted small">Zdjęcie wkrótce</span>
         )}
@@ -20,7 +20,7 @@ export function ArtCard({ offer }: { offer: Offer }) {
         <h3>{offer.title}</h3>
         {offer.price ? <span className="price num">{formatPLN(offer.price)}</span> : <span className="price price--ask">Cena na zapytanie</span>}
       </div>
-      <div className="muted small">{["Stal cięta laserem · LED", offer.dimensions].filter(Boolean).join(" · ")}</div>
+      <div className="muted small">{["Stal cięta laserem", offer.dimensions].filter(Boolean).join(" · ")}</div>
     </Link>
   );
 }

@@ -4,7 +4,7 @@
 /** Nazwa odmiany; lista odmian jest w bazie (tabela varieties). */
 export type Variety = string;
 
-/** „ryba” = grupa żywych koi z filmikiem, „obraz” = podświetlany obraz z metalu ze zdjęciami. */
+/** „ryba” = grupa żywych koi z filmikiem, „obraz” = obraz ze stali (Koi Light Art) ze zdjęciami. */
 export type OfferKind = "ryba" | "obraz";
 
 export type Offer = {
@@ -40,7 +40,7 @@ export type Offer = {
 };
 
 /** Nazwa działu z obrazami z metalu i jego adres; zmiana nazwy działu = zmiana tutaj. */
-export const ART = { name: "Koi Light Art", short: "Light Art", tagline: "Podświetlane obrazy ze stali", path: "/koi-light-art" } as const;
+export const ART = { name: "Koi Light Art", short: "Light Art", tagline: "Obrazy ze stali cięte laserem", path: "/koi-light-art" } as const;
 
 /** Adres strony oferty w sklepie: ryby pod /oferta, obrazy w dziale Koi Light Art. */
 export function offerPath(o: Pick<Offer, "id" | "kind">): string {
@@ -49,7 +49,7 @@ export function offerPath(o: Pick<Offer, "id" | "kind">): string {
 
 /** Krótki opis obrazu do podglądu linku. */
 export function artworkSummary(o: Offer): string {
-  const facts = ["Obraz z metalu podświetlany LED", o.dimensions, o.price ? formatPLN(o.price) : "cena na zapytanie"].filter(Boolean).join(" · ");
+  const facts = ["Obraz ze stali cięty laserem", o.dimensions, o.price ? formatPLN(o.price) : "cena na zapytanie"].filter(Boolean).join(" · ");
   return o.description ? `${o.description.trim().split(/(?<=[.!?])\s/)[0]} ${facts}.` : `${facts}. Odbiór osobisty w Zakrzewie.`;
 }
 

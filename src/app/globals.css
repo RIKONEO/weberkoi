@@ -486,3 +486,5 @@ a.kpi:hover { border-color: var(--paper-2); }
   .door__title { font-size: clamp(38px, 11vw, 56px); }
 }
 @media (prefers-reduced-motion: reduce) { .door, .door--art .door__img { transition: none; } .door--art .door__glow { animation: none; } }
+.art-custom { margin: 40px 0 32px; max-width: 760px; }
+.art-custom h2 { margin: 0; }

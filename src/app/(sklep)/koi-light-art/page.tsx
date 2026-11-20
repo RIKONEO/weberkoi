@@ -3,10 +3,11 @@ import Link from "next/link";
 import { ArtCard } from "@/components/ArtCard";
 import { listArtworks } from "@/lib/data";
 import { ART } from "@/lib/offers";
+import { CONTACT } from "@/lib/contact";
 
 export const metadata: Metadata = {
-  title: `${ART.name}: podświetlane obrazy ze stali z motywem koi`,
-  description: "Obrazy z karpiami koi wycinane laserem w stali i podświetlane od tyłu diodami LED. Ręcznie wykańczane w WEBER Nishikigoi, odbiór osobisty w Zakrzewie.",
+  title: `${ART.name}: obrazy ze stali z motywem koi, cięte laserem`,
+  description: "Obrazy z karpiami koi wycinane laserem w stali, także własne wzory na wymiar do 2 × 2 m. WEBER Nishikigoi, odbiór osobisty w Zakrzewie.",
   alternates: { canonical: ART.path },
 };
 export const dynamic = "force-dynamic";
@@ -19,8 +20,8 @@ export default async function ArtPage() {
         <div className="eyebrow">{ART.tagline}</div>
         <h1 className="page-title">{ART.name}</h1>
         <p className="muted">
-          Koi, które świecą na ścianie. Każdy wzór wycinamy laserem w stalowej płycie i podświetlamy od tyłu diodami LED: w dzień to grafika
-          z czarnej stali, a po zmroku ryba ożywa w ciepłym świetle. Wzory projektujemy sami, z miłości do koi, które hodujemy.
+          Koi wycięte laserem w stalowej płycie, do powieszenia na ścianie. Na zdjęciach za obrazem jest lampa, żeby było widać
+          każdy detal. Sam obraz sprzedajemy bez podświetlenia, więc możesz go powiesić na jasnej ścianie albo dodać własne światło.
         </p>
       </div>
       {list.length ? (
@@ -32,6 +33,18 @@ export default async function ArtPage() {
       ) : (
         <p className="empty">Nowe obrazy już wkrótce.</p>
       )}
+      <section id="wlasny-wzor" className="panel art-custom section">
+        <div className="eyebrow">Na zamówienie</div>
+        <h2>Twój wzór, Twój wymiar</h2>
+        <p className="muted">
+          Masz własny pomysł: swoją rybę, logo, napis albo inny motyw? Wytniemy go w stali na wymiar, do <b>2 × 2 m</b>. Wyślij nam szkic albo zdjęcie
+          i podaj rozmiar, a wycenimy wycinkę.
+        </p>
+        <div className="row">
+          <a href={CONTACT.phoneHref} className="btn btn--primary">Zadzwoń: {CONTACT.phone}</a>
+          <a href={`mailto:${CONTACT.email}?subject=${encodeURIComponent(`${ART.name}: własny wzór`)}`} className="btn">Wyślij szkic mailem</a>
+        </div>
+      </section>
       <div className="steps section">
         <div>
           <h3>Wybierasz wzór</h3>
@@ -44,7 +57,7 @@ export default async function ArtPage() {
         <div>
           <h3>Odbierasz u nas</h3>
           <p className="muted">
-            Obraz odbierasz osobiście w Zakrzewie, a my pokażemy, jak go powiesić i podłączyć. <Link href="/odbior">Jak dojechać</Link>
+            Obraz odbierasz osobiście w Zakrzewie, a my podpowiemy, jak go powiesić. <Link href="/odbior">Jak dojechać</Link>
           </p>
         </div>
       </div>

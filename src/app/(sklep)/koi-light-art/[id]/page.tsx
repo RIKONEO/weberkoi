@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = artworkSummary(offer);
   const url = `${ART.path}/${offer.id}`;
   return {
-    title: `${offer.title}: obraz ze stali podświetlany LED`,
+    title: `${offer.title}: obraz z koi ze stali cięty laserem`,
     description,
     alternates: { canonical: url },
     openGraph: { ...OPEN_GRAPH_BASE, title: `${offer.title} · ${ART.name}`, description, url, images: offer.photos[0] ? [offer.photos[0]] : undefined },
@@ -43,12 +43,15 @@ export default async function ArtworkPage({ params }: Props) {
           {offer.description && <p className="muted art__desc">{offer.description}</p>}
           <dl className="specs">
             <dt>Materiał</dt><dd>Stal cięta laserem</dd>
-            <dt>Światło</dt><dd>Podświetlenie LED od tyłu</dd>
+            <dt>Wykonanie</dt><dd>Bez podświetlenia. Na zdjęciach światło jest za obrazem, żeby było widać wzór.</dd>
             {offer.dimensions && <><dt>Wymiary</dt><dd>{offer.dimensions}</dd></>}
             <dt>Cena</dt><dd>{offer.price ? <span className="num">{formatPLN(offer.price)}</span> : "na zapytanie"}</dd>
             <dt>Odbiór</dt><dd>Osobisty w Zakrzewie</dd>
           </dl>
           <AddArtToCart offerId={offer.id} title={offer.title} price={offer.price} photo={offer.photos[0]} soldOut={left === 0} />
+          <p className="muted small">
+            Chcesz inny rozmiar albo własny wzór? Wytniemy go na wymiar, do 2 × 2 m. <Link href={`${ART.path}#wlasny-wzor`}>Zobacz, jak to działa</Link>.
+          </p>
           <p className="muted small">
             Nie płacisz teraz. Po zgłoszeniu {CONTACT.person} oddzwoni, potwierdzi cenę i termin odbioru. Pytania? Zadzwoń:{" "}
             <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>.

@@ -40,7 +40,7 @@ export async function listOffers({ includeHidden = false, kind = "ryba" as Offer
     .select()
     .from(offers)
     .where(and(eq(offers.kind, kind), includeHidden ? undefined : eq(offers.published, true)))
-    .orderBy(desc(offers.featured), desc(offers.addedAt));
+    .orderBy(desc(offers.featured), desc(offers.addedAt), asc(offers.title));
   return rows.map(toOffer);
 }
 

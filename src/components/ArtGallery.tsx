@@ -11,7 +11,7 @@ export function ArtGallery({ photos, title }: { photos: string[]; title: string 
     <div className="art-gallery">
       <a href={cur} target="_blank" rel="noreferrer" className="art-gallery__main" aria-label="Otwórz zdjęcie w pełnym rozmiarze">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={cur} alt={`${title}: podświetlany obraz ze stali`} />
+        <img src={cur} alt={`${title}: obraz z koi wycięty laserem w stali`} />
       </a>
       {photos.length > 1 && (
         <div className="art-gallery__thumbs">

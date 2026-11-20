@@ -51,7 +51,7 @@ function Item({ item, onRemove, onQty }: { item: CartItem; onRemove: () => void;
       <div className="cart-item__body">
         <Link href={offerPath({ id: item.offerId, kind: art ? "obraz" : "ryba" })}><b>{item.title}</b></Link>
         <span className="small muted">
-          {art && "Obraz ze stali z podświetleniem LED · "}
+          {art && "Obraz ze stali · "}
           {item.price ? `${formatPLN(item.price)} za sztukę` : "cena do ustalenia"}
           {item.second && ` · ${item.second} na filmiku`}
         </span>

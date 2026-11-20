@@ -9,7 +9,7 @@ export const varieties = pgTable("varieties", {
   position: integer("position").notNull().default(0),
 });
 
-/** Rodzaj oferty: grupa żywych ryb z filmikiem albo podświetlany obraz z metalu (ze zdjęciami). */
+/** Rodzaj oferty: grupa żywych ryb z filmikiem albo obraz ze stali (ze zdjęciami). */
 export const OFFER_KINDS = ["ryba", "obraz"] as const;
 export type OfferKind = (typeof OFFER_KINDS)[number];
 
