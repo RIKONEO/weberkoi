@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ART } from "@/lib/offers";
 import { useEffect, useRef, useState } from "react";
 import type { Pond } from "@/lib/pond/createPond";
 import { SiteHeader } from "./SiteHeader";
@@ -62,6 +63,9 @@ export function PondHero() {
         <div className="row">
           <Link href="/katalog" className="btn btn--primary">
             Zobacz katalog
+          </Link>
+          <Link href={ART.path} className="btn btn--glass btn--art">
+            <span aria-hidden="true">✦</span> {ART.name}
           </Link>
           {mode !== "none" && (
             <button type="button" className="btn btn--glass" onClick={() => { pondRef.current?.feed(); setFed(true); }}>

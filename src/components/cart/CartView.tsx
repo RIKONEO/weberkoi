@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { formatPLN, plural } from "@/lib/offers";
+import { ART, formatPLN, offerPath, plural } from "@/lib/offers";
 import { MAX_UPLOAD_BYTES } from "@/lib/enquiry";
 import { CONTACT } from "@/lib/contact";
 import { PICKUP_RULE, PICKUP_TEXT, formatDay, pickupDeadline } from "@/lib/pickup";
@@ -34,17 +34,24 @@ async function fitShots(items: CartItem[]): Promise<Blob[]> {
   return shots;
 }
 
+/** „ryba/ryby/ryb”, a gdy w koszyku są też obrazy z metalu: „pozycja/pozycje/pozycji”. */
+function noun(items: CartItem[], n: number) {
+  return items.some((it) => it.kind === "obraz") ? plural(n, "pozycja", "pozycje", "pozycji") : plural(n, "ryba", "ryby", "ryb");
+}
+
 function Item({ item, onRemove, onQty }: { item: CartItem; onRemove: () => void; onQty: (n: number) => void }) {
   const url = useBlobUrl(item.shot);
+  const art = item.kind === "obraz";
   return (
     <li className="cart-item">
       <a href={url} target="_blank" rel="noreferrer" className="cart-item__img">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {url && <img src={url} alt={`Stopklatka z rybą z oferty ${item.title}`} />}
+        {url && <img src={url} alt={art ? `Obraz ${item.title}` : `Stopklatka z rybą z oferty ${item.title}`} />}
       </a>
       <div className="cart-item__body">
-        <Link href={`/oferta/${item.offerId}`}><b>{item.title}</b></Link>
+        <Link href={offerPath({ id: item.offerId, kind: art ? "obraz" : "ryba" })}><b>{item.title}</b></Link>
         <span className="small muted">
+          {art && "Obraz ze stali z podświetleniem LED · "}
           {item.price ? `${formatPLN(item.price)} za sztukę` : "cena do ustalenia"}
           {item.second && ` · ${item.second} na filmiku`}
         </span>
@@ -84,7 +91,7 @@ export function CartView() {
     for (const [k, v] of Object.entries(form)) body.set(k, v);
     body.set("items", JSON.stringify(cart.items.map((it) => ({ offerId: it.offerId, qty: it.qty, second: it.second, fishNo: it.fishNo }))));
     const shots = await fitShots(cart.items);
-    shots.forEach((b, i) => body.append(`shot-${i}`, b, `ryba-${i + 1}.jpg`));
+    shots.forEach((b, i) => body.append(`shot-${i}`, b, `${cart.items[i].kind === "obraz" ? "obraz" : "ryba"}-${i + 1}.jpg`));
     let res: Response;
     try {
       res = await fetch("/api/zapytania", { method: "POST", body });
@@ -114,9 +121,9 @@ export function CartView() {
     return (
       <div className="panel">
         <p className="notice" role="status">
-          Dziękujemy, ryby są zarezerwowane. Zadzwonimy, potwierdzimy ryby i cenę, i umówimy odbiór osobisty w Zakrzewie.
+          Dziękujemy, zgłoszenie dotarło i wszystko jest zarezerwowane. Zadzwonimy, potwierdzimy szczegóły i cenę, i umówimy odbiór osobisty w Zakrzewie.
           <br />
-          <b>Odbierz ryby najpóźniej {sentTo}.</b> Po tym terminie wracają do sprzedaży.
+          <b>Odbierz zamówione rzeczy najpóźniej {sentTo}.</b> Po tym terminie wracają do sprzedaży.
         </p>
         <Link href="/katalog" className="btn">Wróć do katalogu</Link>
       </div>
@@ -145,21 +152,24 @@ export function CartView() {
         </ul>
         <div className="cart-sum">
           <span>
-            Razem: <b className="num">{cart.count}</b> {plural(cart.count, "ryba", "ryby", "ryb")}
+            Razem: <b className="num">{cart.count}</b> {noun(cart.items, cart.count)}
           </span>
           {total > 0 && (
             <span>
               orientacyjnie <b className="num">{formatPLN(total)}</b>
-              {unpriced > 0 && <span className="muted small"> + {unpriced === 1 ? "ryba" : "ryby"} z ceną do ustalenia</span>}
+              {unpriced > 0 && <span className="muted small"> + pozycje z ceną do ustalenia</span>}
             </span>
           )}
         </div>
-        <Link href="/katalog" className="btn">+ Wybierz kolejną rybę</Link>
+        <div className="row">
+          <Link href="/katalog" className="btn">+ Wybierz kolejną rybę</Link>
+          <Link href={ART.path} className="btn">+ Obrazy {ART.name}</Link>
+        </div>
       </section>
 
       <form className="panel" onSubmit={send}>
         <h2 className="panel__title">Wyślij zgłoszenie</h2>
-        <p className="muted small">Sprawdzimy, czy wszystkie ryby są wolne, potwierdzimy cenę i umówimy odbiór osobisty.</p>
+        <p className="muted small">Sprawdzimy, czy wszystko jest wolne, potwierdzimy cenę i umówimy odbiór osobisty.</p>
         <label className="field">
           Imię
           <input id="enq-name" required value={form.name} onChange={set("name")} autoComplete="given-name" />
@@ -174,7 +184,7 @@ export function CartView() {
             <input id="enq-email" type="email" value={form.email} onChange={set("email")} autoComplete="email" />
           </label>
         </div>
-        <p className="muted small">Zadzwonimy, żeby potwierdzić rezerwację i umówić odbiór. Na e-mail wyślemy potwierdzenie ze zdjęciami ryb.</p>
+        <p className="muted small">Zadzwonimy, żeby potwierdzić rezerwację i umówić odbiór. Na e-mail wyślemy potwierdzenie ze zdjęciami.</p>
         <label className="field">
           Wiadomość (opcjonalnie)
           <textarea id="enq-message" rows={3} value={form.message} onChange={set("message")} placeholder="np. mogę przyjechać w sobotę" />
@@ -185,12 +195,12 @@ export function CartView() {
         </label>
         {state === "error" && <p className="notice notice--error" role="alert">{error}</p>}
         <p className="notice notice--warn small"><b>Odbiór w ciągu {PICKUP_TEXT}.</b> {PICKUP_RULE}</p>
-        <p className="muted small">Nie płacisz teraz. Zapłacisz gotówką przy odbiorze albo przelewem, gdy potwierdzimy ryby.</p>
+        <p className="muted small">Nie płacisz teraz. Zapłacisz gotówką przy odbiorze albo przelewem, gdy potwierdzimy zgłoszenie.</p>
         <button type="submit" className="btn btn--primary" disabled={state === "sending"}>
-          {state === "sending" ? "Wysyłanie…" : `Wyślij zgłoszenie (${cart.count} ${plural(cart.count, "ryba", "ryby", "ryb")})`}
+          {state === "sending" ? "Wysyłanie…" : `Wyślij zgłoszenie (${cart.count} ${noun(cart.items, cart.count)})`}
         </button>
         <p className="muted small">
-          Dane ze zgłoszenia wykorzystamy tylko do odpowiedzi i sprzedaży ryb. Stopklatki mogą pokazać się pod filmikami jako ryby zarezerwowane,
+          Dane ze zgłoszenia wykorzystamy tylko do odpowiedzi i sprzedaży. Stopklatki mogą pokazać się pod filmikami jako ryby zarezerwowane,
           bez Twojego imienia i kontaktu. Więcej w <Link href="/polityka-prywatnosci">polityce prywatności</Link>.
         </p>
       </form>

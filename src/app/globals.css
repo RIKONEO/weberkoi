@@ -406,3 +406,44 @@ a.kpi:hover { border-color: var(--paper-2); }
 .mapedit__stage { cursor: crosshair; touch-action: manipulation; }
 .mapedit .video video { object-fit: contain; background: #000; }
 .mapedit { scroll-margin-top: 140px; }
+
+/* Koi Light Art: podświetlane obrazy ze stali */
+.art-intro { max-width: 68ch; display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
+.art-tile__media { aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden; background: #050909; display: grid; place-items: center; box-shadow: 0 0 0 1px var(--line); transition: box-shadow 0.2s; }
+.art-tile__media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s; }
+.art-tile:hover .art-tile__media { box-shadow: 0 0 0 2px var(--hi); }
+.art-tile:hover .art-tile__media img { transform: scale(1.03); }
+.tile--featured .art-tile__media { box-shadow: 0 0 0 1px var(--hi); }
+.tile__badge--mu { left: auto; right: 10px; background: var(--ink-2, #14211f); color: var(--paper); }
+.art-grid { grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); }
+.art-tile__media { grid-template-columns: minmax(0, 1fr); }
+.art-gallery, .art-tile { min-width: 0; }
+.art-gallery img, .art-tile img { max-width: 100%; }
+.art { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.art__desc { white-space: pre-line; }
+.art-gallery { display: flex; flex-direction: column; gap: 10px; }
+.art-gallery__main { display: block; border-radius: 12px; overflow: hidden; background: #050909; box-shadow: 0 0 0 1px var(--line); }
+.art-gallery__main img { width: 100%; max-height: 80vh; object-fit: contain; display: block; }
+.art-gallery__main--empty { aspect-ratio: 3 / 4; display: grid; place-items: center; }
+.art-gallery__thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+.art-gallery__thumb { width: 64px; height: 84px; padding: 0; border: 2px solid transparent; border-radius: 8px; overflow: hidden; background: #050909; cursor: pointer; }
+.art-gallery__thumb[aria-pressed="true"] { border-color: var(--hi); }
+.art-gallery__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (max-width: 800px) { .art { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
+.admin-art { flex-direction: row; align-items: flex-start; gap: 14px; }
+.admin-art > .stack { flex: 1; min-width: 0; }
+.admin-art__thumb { width: 72px; height: 96px; object-fit: cover; border-radius: 8px; flex: none; background: #050909; }
+.warn-text { color: var(--warn); }
+.photos-field { display: flex; flex-direction: column; gap: 10px; }
+.photos-field__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.photos-field__item { position: relative; display: flex; flex-direction: column; gap: 6px; }
+.photos-field__item img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px; background: #050909; display: block; }
+.photos-field__main { position: absolute; left: 6px; top: 6px; }
+.photos-field__actions { display: flex; gap: 4px; flex-wrap: wrap; }
+.photos-field label.btn { align-self: flex-start; cursor: pointer; }
+.btn--art { border-color: rgba(231, 181, 58, 0.55); color: #f6dfa0; box-shadow: 0 0 18px rgba(231, 181, 58, 0.18); }
+.btn--art:hover { border-color: #e7b53a; box-shadow: 0 0 24px rgba(231, 181, 58, 0.35); }
+.site-nav a { white-space: nowrap; }
+/* Na wąskim telefonie w menu jest też Koi Light Art: zostaje samo logo bez napisu WEBER. */
+@media (max-width: 480px) { .site-header .brand span { display: none; } .site-nav a { padding: 8px 6px; } }
+.art-tile .tile__meta { flex-direction: column; gap: 2px; }

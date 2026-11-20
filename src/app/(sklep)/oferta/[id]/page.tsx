@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { OfferPicker } from "@/components/OfferPicker";
 import { getFishMap, getOffer, listMapStatuses, listTakenFish } from "@/lib/data";
-import { available, formatPLN, offerSummary, sizeLabel } from "@/lib/offers";
+import { available, formatPLN, offerPath, offerSummary, sizeLabel } from "@/lib/offers";
 import { OPEN_GRAPH_BASE } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { offerSchema } from "@/lib/schema-org";
@@ -28,6 +28,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function OfferPage({ params }: Props) {
   const offer = await getOffer((await params).id);
   if (!offer) notFound();
+  // Obrazy z metalu mają własną stronę w dziale Koi Light Art.
+  if (offer.kind !== "ryba") permanentRedirect(offerPath(offer));
   const [taken, map, statuses] = await Promise.all([listTakenFish(offer.id), getFishMap(offer.id), listMapStatuses(offer)]);
   return (
     <div className="wrap section">

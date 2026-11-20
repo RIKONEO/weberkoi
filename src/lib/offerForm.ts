@@ -86,3 +86,65 @@ export function parseVarietyName(raw: string): { ok: true; value: string } | { o
   if (name.length > 40) return { ok: false, error: "Nazwa odmiany może mieć najwyżej 40 znaków." };
   return { ok: true, value: name.replace(/(^|[\s-])(\p{L})/gu, (_, sep: string, ch: string) => sep + ch.toLocaleUpperCase("pl-PL")) };
 }
+
+/** Najwięcej zdjęć przy jednym obrazie. */
+export const MAX_ART_PHOTOS = 8;
+
+/** Adres zdjęcia obrazu: wgrane w panelu (/zdjecie/12) albo plik ze strony (/img/…). */
+const PHOTO_URL = /^\/(zdjecie\/\d+|img\/[\w./-]+\.(jpe?g|png|webp))$/;
+
+/** Formularz obrazu z metalu (dział Koi Light Art) z panelu admina. */
+export function parseArtworkForm(f: FormData, existingId?: string): { ok: true; value: OfferInput } | { ok: false; error: string } {
+  const get = (k: string) => String(f.get(k) ?? "").trim();
+  const title = get("title");
+  if (!title) return { ok: false, error: "Podaj nazwę obrazu." };
+  const id = existingId ?? (slugify(get("id") || `obraz-${title}`) || "");
+  if (!id) return { ok: false, error: "Podaj adres obrazu (same litery, cyfry i myślniki)." };
+
+  const priceRaw = get("price");
+  const price = priceRaw === "" ? null : Number(priceRaw.replace(/\s/g, "").replace(",", "."));
+  if (price !== null && (!Number.isInteger(price) || price < 1)) return { ok: false, error: "Cena to pełne złote (np. 890). Zostaw puste dla „cena na zapytanie”." };
+
+  const count = get("count") === "" ? NaN : Number(get("count"));
+  if (!Number.isInteger(count) || count < 0 || count > 999) return { ok: false, error: "Podaj, ile sztuk możesz sprzedać (np. 1, a 0 = wyprzedany)." };
+  const groupSold = get("groupSold") === "" ? 0 : Number(get("groupSold"));
+  if (!Number.isInteger(groupSold) || groupSold < 0) return { ok: false, error: "Liczba sprzedanych musi być liczbą całkowitą." };
+
+  let photos: string[];
+  try {
+    const raw = JSON.parse(get("photos") || "[]");
+    photos = Array.isArray(raw) ? raw.filter((p): p is string => typeof p === "string") : [];
+  } catch {
+    return { ok: false, error: "Nie udało się odczytać listy zdjęć. Odśwież stronę i spróbuj jeszcze raz." };
+  }
+  photos = [...new Set(photos)];
+  if (photos.some((p) => !PHOTO_URL.test(p))) return { ok: false, error: "Nieprawidłowe zdjęcie na liście. Usuń je i wgraj jeszcze raz." };
+  if (photos.length > MAX_ART_PHOTOS) return { ok: false, error: `Obraz może mieć najwyżej ${MAX_ART_PHOTOS} zdjęć.` };
+
+  return {
+    ok: true,
+    value: {
+      id,
+      kind: "obraz",
+      variety: "",
+      title: title.slice(0, 120),
+      breeder: "",
+      age: "",
+      sizeMin: 0,
+      sizeMax: 0,
+      // Sztuk do sprzedania; sprzedane ze zgłoszeń („Sprzedana” w panelu) zwiększają groupSold.
+      count: Math.max(count, groupSold),
+      price,
+      sold: [],
+      groupSold,
+      videoUrl: null,
+      posterUrl: null,
+      videoLength: null,
+      dimensions: get("dimensions").slice(0, 80),
+      photos,
+      description: get("description").slice(0, 3000),
+      published: f.get("published") === "on",
+      featured: f.get("featured") === "on",
+    },
+  };
+}

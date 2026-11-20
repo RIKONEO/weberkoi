@@ -5,7 +5,7 @@
 import "server-only";
 import { PICKUP_TEXT, formatDay, pickupDeadline } from "./pickup";
 import type { Contact } from "./enquiry";
-import { formatPLN, plural, type Offer } from "./offers";
+import { formatPLN, offerPath, plural, type Offer } from "./offers";
 import { CONTACT } from "./contact";
 import { SITE_NAME } from "./site";
 import { abs, button, C, esc, eyebrow, facts, fishCard, layout, p, quote } from "./email/layout";
@@ -18,7 +18,14 @@ const TEST_FROM = `${SITE_NAME} <onboarding@resend.dev>`;
 export type NotifyItem = { id: number; offer: Offer; qty: number; second: string; fishNo?: number | null; screenshots: { mime: string; data: Buffer }[] };
 type Attachment = { filename: string; content: string; content_id: string };
 
-const ryb = (n: number) => plural(n, "ryba", "ryby", "ryb");
+const isArt = (it: NotifyItem) => it.offer.kind === "obraz";
+/** Rzeczownik do liczby pozycji: same ryby, same obrazy z metalu albo jedno i drugie. */
+function nounFor(items: NotifyItem[]) {
+  const art = items.filter(isArt).length;
+  if (!art) return (n: number) => plural(n, "ryba", "ryby", "ryb");
+  if (art === items.length) return (n: number) => plural(n, "obraz", "obrazy", "obrazów");
+  return (n: number) => plural(n, "pozycja", "pozycje", "pozycji");
+}
 const sender = () => process.env.EMAIL_FROM || TEST_FROM;
 
 /** Czy możemy pisać do klientów: tylko z własnej, zweryfikowanej w Resend domeny (EMAIL_FROM). */
@@ -47,7 +54,7 @@ function inlineShots(items: NotifyItem[]) {
       if ((size += s.data.length) > MAX_ATTACH_BYTES) break;
       const ext = s.mime === "image/png" ? "png" : s.mime === "image/webp" ? "webp" : "jpg";
       const cid = `shot${++n}`;
-      attachments.push({ filename: `ryba-${i + 1}${it.screenshots.length > 1 ? `-${out.length + 1}` : ""}.${ext}`, content: s.data.toString("base64"), content_id: cid });
+      attachments.push({ filename: `${isArt(it) ? "obraz" : "ryba"}-${i + 1}${it.screenshots.length > 1 ? `-${out.length + 1}` : ""}.${ext}`, content: s.data.toString("base64"), content_id: cid });
       out.push(`cid:${cid}`);
     }
     return out;
@@ -60,17 +67,18 @@ function summary(items: NotifyItem[]) {
   const total = items.reduce((s, i) => s + (i.offer.price ?? 0) * i.qty, 0);
   const unpriced = items.some((i) => !i.offer.price);
   const many = new Set(items.map((i) => i.offer.id)).size > 1;
+  const ryb = nounFor(items);
   const title = items.length > 1 ? `${fish} ${ryb(fish)} z ${many ? "kilku ofert" : items[0].offer.title}` : items[0].offer.title;
-  const totalText = total ? `ok. ${formatPLN(total)}${unpriced ? " + ryby z ceną do ustalenia" : ""}` : "cena do ustalenia";
-  return { fish, total, totalText, title };
+  const totalText = total ? `ok. ${formatPLN(total)}${unpriced ? " + pozycje z ceną do ustalenia" : ""}` : "cena do ustalenia";
+  return { fish, total, totalText, title, ryb, anyFish: items.some((i) => !isArt(i)) };
 }
 
 const itemLine = (it: NotifyItem) =>
-  [it.fishNo ? `ryba nr ${it.fishNo} z mapy` : `${it.qty} szt.`, it.offer.price ? `${formatPLN(it.offer.price)} za sztukę` : "cena do ustalenia", it.second && `widać ją w ${it.second}`].filter(Boolean).join(" · ");
+  [isArt(it) && "obraz ze stali, LED", it.fishNo ? `ryba nr ${it.fishNo} z mapy` : `${it.qty} szt.`, it.offer.price ? `${formatPLN(it.offer.price)} za sztukę` : "cena do ustalenia", it.second && `widać ją w ${it.second}`].filter(Boolean).join(" · ");
 
 function fishList(items: NotifyItem[], cids: string[][]) {
   return items
-    .map((it, i) => fishCard({ n: items.length > 1 ? i + 1 : undefined, title: it.offer.title, href: abs(`/oferta/${it.offer.id}`), line: itemLine(it), images: cids[i] }))
+    .map((it, i) => fishCard({ n: items.length > 1 ? i + 1 : undefined, title: it.offer.title, href: abs(offerPath(it.offer)), line: itemLine(it), images: cids[i] }))
     .join("");
 }
 
@@ -83,7 +91,7 @@ export async function notifyNewEnquiry(e: Contact, items: NotifyItem[]) {
   }
   const to = (process.env.ENQUIRY_EMAIL_TO || CONTACT.email).split(",").map((s) => s.trim()).filter(Boolean);
   const panel = abs(`/admin/zapytania#z${ids[0]}`);
-  const { fish, total, totalText, title } = summary(items);
+  const { fish, total, totalText, title, ryb, anyFish } = summary(items);
   const { attachments, cids } = inlineShots(items);
 
   const telHref = `tel:${e.phone.replace(/[^\d+]/g, "")}`;
@@ -96,12 +104,12 @@ export async function notifyNewEnquiry(e: Contact, items: NotifyItem[]) {
   ];
 
   const body = [
-    p(`<b>${esc(e.name)}</b> chce ${esc(`${fish} ${ryb(fish)}`)}. Ryby z tego zgłoszenia są już oznaczone pod filmikiem jako <b>zarezerwowane</b>.`),
+    p(`<b>${esc(e.name)}</b> chce ${esc(`${fish} ${ryb(fish)}`)}.${anyFish ? " Ryby z tego zgłoszenia są już oznaczone pod filmikiem jako <b>zarezerwowane</b>." : ""}`),
     button(panel, "Otwórz zgłoszenie w panelu"),
     eyebrow("Klient"),
     facts(contact),
     e.message ? eyebrow("Wiadomość") + quote(e.message) : "",
-    eyebrow(items.length > 1 ? `Ryby (${items.length})` : "Ryba"),
+    eyebrow(items.length > 1 ? `${ryb(2).replace(/^./, (c) => c.toUpperCase())} (${items.length})` : isArt(items[0]) ? "Obraz" : "Ryba"),
     fishList(items, cids),
     e.phone || e.email
       ? p(
@@ -122,7 +130,7 @@ export async function notifyNewEnquiry(e: Contact, items: NotifyItem[]) {
     `Razem: ${fish} ${ryb(fish)}, ${totalText}`,
     ...(e.message ? ["", "Wiadomość:", e.message] : []),
     "",
-    ...items.map((it, i) => `${i + 1}. ${it.offer.title} (${itemLine(it)}) ${abs(`/oferta/${it.offer.id}`)}`),
+    ...items.map((it, i) => `${i + 1}. ${it.offer.title} (${itemLine(it)}) ${abs(offerPath(it.offer))}`),
     "",
     `Panel: ${panel}`,
   ]
@@ -150,14 +158,14 @@ export async function confirmEnquiry(e: Contact, items: NotifyItem[]) {
     console.warn("zgłoszenie: potwierdzenie dla klienta pominięte, ustaw EMAIL_FROM z własnej domeny w Resend");
     return;
   }
-  const { fish, totalText, title } = summary(items);
+  const { fish, totalText, title, ryb, anyFish } = summary(items);
   const { attachments, cids } = inlineShots(items);
   const first = e.name.split(/\s+/)[0];
 
   const steps = [
-    ["Oddzwonimy albo odpiszemy", `${CONTACT.person} potwierdzi z Tobą rybę, cenę i termin odbioru.`],
+    ["Oddzwonimy albo odpiszemy", `${CONTACT.person} potwierdzi z Tobą ${anyFish ? "rybę" : "obraz"}, cenę i termin odbioru.`],
     ["Płatność", "Przelewem albo gotówką przy odbiorze. Na stronie niczego nie płacisz."],
-    ["Odbiór osobisty", `Najpóźniej ${formatDay(pickupDeadline())} (${PICKUP_TEXT} od zgłoszenia), ${CONTACT.street}, ${CONTACT.city}. Rybę pakujemy na miejscu. Po tym terminie ryby wracają do sprzedaży.`],
+    ["Odbiór osobisty", `Najpóźniej ${formatDay(pickupDeadline())} (${PICKUP_TEXT} od zgłoszenia), ${CONTACT.street}, ${CONTACT.city}. ${anyFish ? "Rybę pakujemy na miejscu. " : ""}Po tym terminie rezerwacja wygasa.`],
   ];
   const stepsHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${steps
     .map(
@@ -168,8 +176,8 @@ export async function confirmEnquiry(e: Contact, items: NotifyItem[]) {
     .join("")}</table>`;
 
   const body = [
-    p(`Cześć ${esc(first)}, dziękujemy! Twoje zgłoszenie dotarło do nas. ${fish > 1 ? "Ryby zaznaczyliśmy pod filmikiem jako zarezerwowane, żeby nikt inny ich nie zgłosił." : "Rybę zaznaczyliśmy pod filmikiem jako zarezerwowaną, żeby nikt inny jej nie zgłosił."}`),
-    eyebrow(items.length > 1 ? `Twoje ryby (${fish})` : "Twoja ryba"),
+    p(`Cześć ${esc(first)}, dziękujemy! Twoje zgłoszenie dotarło do nas.${!anyFish ? " Odłożyliśmy dla Ciebie wybrane rzeczy." : fish > 1 ? " Ryby zaznaczyliśmy pod filmikiem jako zarezerwowane, żeby nikt inny ich nie zgłosił." : " Rybę zaznaczyliśmy pod filmikiem jako zarezerwowaną, żeby nikt inny jej nie zgłosił."}`),
+    eyebrow(items.length > 1 ? `Twoje ${ryb(2)} (${fish})` : isArt(items[0]) ? "Twój obraz" : "Twoja ryba"),
     fishList(items, cids),
     items.length > 1 ? p(`Razem: <b>${esc(totalText)}</b>`, "margin-top:4px") : "",
     eyebrow("Co dalej"),
