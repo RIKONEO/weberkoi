@@ -58,6 +58,7 @@ export function PondHero() {
           <span className="door__body">
             <span className="door__eyebrow">Z Japonii i z naszej hodowli</span>
             <span className="door__title">Ryby koi</span>
+            <span className="door__kinds">Kohaku, Sanke, Showa, Ogon i Chagoi</span>
             <span className="door__go">Zobacz katalog <span aria-hidden>→</span></span>
           </span>
         </Link>
