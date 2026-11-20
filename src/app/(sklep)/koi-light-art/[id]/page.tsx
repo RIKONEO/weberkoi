@@ -50,7 +50,7 @@ export default async function ArtworkPage({ params }: Props) {
           </dl>
           <AddArtToCart offerId={offer.id} title={offer.title} price={offer.price} photo={offer.photos[0]} soldOut={left === 0} />
           <p className="muted small">
-            Chcesz inny rozmiar albo własny wzór? Wytniemy go na wymiar, do 2 × 2 m. <Link href={`${ART.path}#wlasny-wzor`}>Zobacz, jak to działa</Link>.
+            Ten wzór wytniemy też w innym rozmiarze, do 2 × 2 m. Podaj wymiar w zgłoszeniu. <Link href={`${ART.path}#wymiar`}>Zobacz, jak to działa</Link>.
           </p>
           <p className="muted small">
             Nie płacisz teraz. Po zgłoszeniu {CONTACT.person} oddzwoni, potwierdzi cenę i termin odbioru. Pytania? Zadzwoń:{" "}

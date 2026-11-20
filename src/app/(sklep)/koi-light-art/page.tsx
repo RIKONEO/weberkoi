@@ -7,7 +7,7 @@ import { CONTACT } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: `${ART.name}: obrazy ze stali z motywem koi, cięte laserem`,
-  description: "Obrazy z karpiami koi wycinane laserem w stali, także własne wzory na wymiar do 2 × 2 m. WEBER Nishikigoi, odbiór osobisty w Zakrzewie.",
+  description: "Obrazy z karpiami koi wycinane laserem w stali, każdy wzór w wybranym wymiarze do 2 × 2 m. WEBER Nishikigoi, odbiór osobisty w Zakrzewie.",
   alternates: { canonical: ART.path },
 };
 export const dynamic = "force-dynamic";
@@ -33,16 +33,16 @@ export default async function ArtPage() {
       ) : (
         <p className="empty">Nowe obrazy już wkrótce.</p>
       )}
-      <section id="wlasny-wzor" className="panel art-custom section">
-        <div className="eyebrow">Na zamówienie</div>
-        <h2>Twój wzór, Twój wymiar</h2>
+      <section id="wymiar" className="panel art-custom section">
+        <div className="eyebrow">Na wymiar</div>
+        <h2>Nasz wzór, Twój wymiar</h2>
         <p className="muted">
-          Masz własny pomysł: swoją rybę, logo, napis albo inny motyw? Wytniemy go w stali na wymiar, do <b>2 × 2 m</b>. Wyślij nam szkic albo zdjęcie
-          i podaj rozmiar, a wycenimy wycinkę.
+          Każdy z naszych wzorów wytniemy w rozmiarze dopasowanym do Twojej ściany, do <b>2 × 2 m</b>. Wybierz wzór, podaj wymiar,
+          a wycenimy wycinkę. Wycinamy tylko nasze wzory, nie robimy cudzych projektów.
         </p>
         <div className="row">
           <a href={CONTACT.phoneHref} className="btn btn--primary">Zadzwoń: {CONTACT.phone}</a>
-          <a href={`mailto:${CONTACT.email}?subject=${encodeURIComponent(`${ART.name}: własny wzór`)}`} className="btn">Wyślij szkic mailem</a>
+          <a href={`mailto:${CONTACT.email}?subject=${encodeURIComponent(`${ART.name}: wzór na wymiar`)}`} className="btn">Napisz maila</a>
         </div>
       </section>
       <div className="steps section">
