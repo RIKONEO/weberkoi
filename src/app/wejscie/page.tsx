@@ -20,7 +20,7 @@ export default async function LockPage({ searchParams }: { searchParams: Promise
           Hasło
           <input id="password" name="password" type="password" required autoFocus autoComplete="current-password" />
         </label>
-        {blad && <p className="notice notice--error" role="alert">Nieprawidłowe hasło.</p>}
+        {blad && <p className="notice notice--error" role="alert">{blad === "limit" ? "Za dużo błędnych prób. Spróbuj ponownie za 15 minut." : "Nieprawidłowe hasło."}</p>}
         <button type="submit" className="btn btn--primary">Wejdź</button>
       </form>
     </main>

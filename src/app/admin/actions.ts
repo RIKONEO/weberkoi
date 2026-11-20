@@ -28,6 +28,7 @@ import {
 import { parseArtworkForm, parseOfferForm, parseVarietyName } from "@/lib/offerForm";
 import { ART } from "@/lib/offers";
 import { setSiteCookie } from "../wejscie/actions";
+import { LIMITS, clientKey, isLimited, recordHit } from "@/lib/rate-limit";
 
 export async function requireAdmin() {
   const jar = await cookies();
@@ -37,7 +38,12 @@ export async function requireAdmin() {
 const withError = (path: string, msg: string) => `${path}${path.includes("?") ? "&" : "?"}blad=${encodeURIComponent(msg)}`;
 
 export async function login(form: FormData) {
-  if (!(await checkPassword(String(form.get("password") ?? "")))) redirect(withError("/admin/logowanie", "Nieprawidłowe hasło."));
+  const who = await clientKey();
+  if (await isLimited(LIMITS.login, who)) redirect(withError("/admin/logowanie", "Za dużo błędnych prób. Spróbuj ponownie za 15 minut."));
+  if (!(await checkPassword(String(form.get("password") ?? "")))) {
+    await recordHit(LIMITS.login, who);
+    redirect(withError("/admin/logowanie", "Nieprawidłowe hasło."));
+  }
   const jar = await cookies();
   jar.set(SESSION_COOKIE, await createSessionToken(), {
     httpOnly: true,
