@@ -153,3 +153,15 @@ export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
   value: jsonb("value").notNull(),
 });
+
+/** Ślady prób (logowanie, zgłoszenia) do limitu liczby prób. IP tylko jako skrót, stare wpisy są kasowane. */
+export const rateHits = pgTable(
+  "rate_hits",
+  {
+    id: serial("id").primaryKey(),
+    bucket: text("bucket").notNull(),
+    key: text("key").notNull(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("rate_hits_bucket_key_at").on(t.bucket, t.key, t.at)],
+);

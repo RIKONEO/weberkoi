@@ -4,6 +4,7 @@ import { normalizeImage } from "@/lib/image";
 import { type EnquiryItem, checkMapFish, parseBasket } from "@/lib/enquiry";
 import { CONTACT } from "@/lib/contact";
 import { confirmEnquiry, notifyNewEnquiry } from "@/lib/notify";
+import { LIMITS, clientKey, isLimited, recordHit } from "@/lib/rate-limit";
 
 const SERVER_ERROR = `Coś poszło nie tak po naszej stronie. Spróbuj jeszcze raz za chwilę albo zadzwoń: ${CONTACT.phone}.`;
 
@@ -19,6 +20,11 @@ export async function POST(req: Request) {
     if (!form) return NextResponse.json({ error: "Nieprawidłowe zgłoszenie." }, { status: 400 });
     // Pole niewidoczne dla ludzi; wypełniają je tylko boty.
     if (String(form.get("website") ?? "")) return NextResponse.json({ ok: true });
+    // Limit zgłoszeń: z jednego adresu i łącznie, żeby bot nie zalał bazy ani skrzynki maili.
+    const who = await clientKey();
+    if ((await isLimited(LIMITS.enquiryIp, who)) || (await isLimited(LIMITS.enquiryAll, "all"))) {
+      return NextResponse.json({ error: `Za dużo zgłoszeń w krótkim czasie. Spróbuj ponownie za godzinę albo zadzwoń: ${CONTACT.phone}.` }, { status: 429 });
+    }
     const parsed = await parseBasket(form, (id) => getOffer(id));
     if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 422 });
 
@@ -54,6 +60,7 @@ export async function POST(req: Request) {
       }
       throw err;
     }
+    await Promise.all([recordHit(LIMITS.enquiryIp, who), recordHit(LIMITS.enquiryAll, "all")]);
     // E-mail do sklepu wysyłamy już po odpowiedzi dla klienta: nie czeka na niego,
     // a błąd poczty (zły klucz, Resend niedostępny) tylko ląduje w logach.
     const mailItems = parsed.value.items.map((it, i) => ({ id: ids[i], offer: it.offer, qty: it.qty, second: it.second, fishNo: it.fishNo ?? null, screenshots: items[i].screenshots }));
