@@ -447,3 +447,41 @@ a.kpi:hover { border-color: var(--paper-2); }
 /* Na wąskim telefonie w menu jest też Koi Light Art: zostaje samo logo bez napisu WEBER. */
 @media (max-width: 480px) { .site-header .brand span { display: none; } .site-nav a { padding: 8px 6px; } }
 .art-tile .tile__meta { flex-direction: column; gap: 2px; }
+
+/* Hero: dwa duże „okna” na stawie: Ryby koi i Koi Light Art */
+.hero__doors { position: absolute; left: 0; right: 0; top: 96px; bottom: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; pointer-events: none; }
+.door { position: relative; display: flex; align-items: flex-end; border-radius: 22px; overflow: hidden; text-decoration: none; color: var(--paper); pointer-events: auto; isolation: isolate; transition: transform 0.45s cubic-bezier(.2,.8,.2,1), box-shadow 0.45s; }
+.door:hover, .door:focus-visible { transform: translateY(-6px); }
+.door__body { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 10px; padding: clamp(22px, 3vw, 40px); width: 100%; background: linear-gradient(0deg, rgba(5, 10, 11, 0.85), rgba(5, 10, 11, 0)); }
+.door__eyebrow { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--paper-2); }
+.door__title { font-family: var(--display); font-size: clamp(40px, 5.6vw, 84px); line-height: 0.95; letter-spacing: 0.01em; }
+.door__go { display: inline-flex; align-self: flex-start; align-items: center; gap: 10px; margin-top: 6px; padding: 12px 22px; border-radius: 999px; font-weight: 700; font-size: 15px; transition: gap 0.3s, background 0.3s; }
+.door:hover .door__go { gap: 16px; }
+
+/* Ryby koi: przezroczyste okno na żywy staw */
+.door--koi { box-shadow: inset 0 0 0 1px rgba(239, 230, 210, 0.35), 0 20px 60px rgba(0, 0, 0, 0.35); }
+.door--koi .door__glass { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 55%); }
+.door--koi:hover { box-shadow: inset 0 0 0 2px var(--hi), 0 26px 70px rgba(200, 48, 44, 0.25); }
+.door--koi .door__go { background: var(--hi); color: #fff6ee; }
+.door--koi:hover .door__go { background: var(--hi-2); }
+
+/* Koi Light Art: ciemna stal i ciepłe światło LED */
+.door--art { background: #040707; box-shadow: inset 0 0 0 1px rgba(231, 181, 58, 0.45), 0 20px 60px rgba(0, 0, 0, 0.5); }
+.door--art .door__img { position: absolute; inset: 0; background: url("/img/obrazy/showa-wsrod-fal.jpg") center 30% / cover no-repeat; filter: brightness(0.75) saturate(0.9); transition: transform 1.2s cubic-bezier(.2,.8,.2,1), filter 0.6s; }
+.door--art .door__glow { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(60% 50% at 50% 40%, rgba(255, 196, 92, 0.22), rgba(255, 196, 92, 0) 70%); mix-blend-mode: screen; animation: door-glow 4.5s ease-in-out infinite; }
+.door--art .door__body { background: linear-gradient(0deg, rgba(4, 7, 7, 0.92) 20%, rgba(4, 7, 7, 0)); padding-top: 120px; }
+.door--art .door__title { color: #f6dfa0; text-shadow: 0 0 28px rgba(231, 181, 58, 0.45); }
+.door--art .door__go { background: rgba(231, 181, 58, 0.14); color: #f6dfa0; box-shadow: inset 0 0 0 1px rgba(231, 181, 58, 0.6); }
+.door--art:hover { box-shadow: inset 0 0 0 2px #e7b53a, 0 26px 80px rgba(231, 181, 58, 0.3); }
+.door--art:hover .door__img { transform: scale(1.05); filter: brightness(1) saturate(1); }
+.door--art:hover .door__go { background: rgba(231, 181, 58, 0.26); }
+@keyframes door-glow { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+.hero:has(.hero__doors) .hero__scrim { background: linear-gradient(180deg, rgba(6, 14, 15, 0.55), rgba(6, 14, 15, 0) 22%); }
+@media (max-width: 800px) {
+  .hero:has(.hero__doors) { height: auto; min-height: 0; }
+  .hero__doors { position: relative; top: auto; bottom: auto; grid-template-columns: 1fr; gap: 14px; padding-top: 88px; padding-bottom: 20px; }
+  .door { min-height: 38svh; border-radius: 18px; }
+  .door__title { font-size: clamp(38px, 11vw, 56px); }
+}
+@media (prefers-reduced-motion: reduce) { .door, .door--art .door__img { transition: none; } .door--art .door__glow { animation: none; } }
