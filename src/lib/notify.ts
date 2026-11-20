@@ -74,7 +74,7 @@ function summary(items: NotifyItem[]) {
 }
 
 const itemLine = (it: NotifyItem) =>
-  [isArt(it) && "obraz ze stali, LED", it.fishNo ? `ryba nr ${it.fishNo} z mapy` : `${it.qty} szt.`, it.offer.price ? `${formatPLN(it.offer.price)} za sztukę` : "cena do ustalenia", it.second && `widać ją w ${it.second}`].filter(Boolean).join(" · ");
+  [isArt(it) && "obraz ze stali", it.fishNo ? `ryba nr ${it.fishNo} z mapy` : `${it.qty} szt.`, it.offer.price ? `${formatPLN(it.offer.price)} za sztukę` : "cena do ustalenia", it.second && `widać ją w ${it.second}`].filter(Boolean).join(" · ");
 
 function fishList(items: NotifyItem[], cids: string[][]) {
   return items

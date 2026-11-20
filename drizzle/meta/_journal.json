@@ -64,6 +64,20 @@
       "when": 1795199080309,
       "tag": "0008_obrazy_z_metalu",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795200835958,
+      "tag": "0009_nowe_zdjecia_obrazow",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795201041801,
+      "tag": "0010_obrazy_bez_nazw",
+      "breakpoints": true
     }
   ]
 }
