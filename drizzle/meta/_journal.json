@@ -57,6 +57,13 @@
       "when": 1794670495903,
       "tag": "0007_mapa_ryb",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795199080309,
+      "tag": "0008_obrazy_z_metalu",
+      "breakpoints": true
     }
   ]
 }

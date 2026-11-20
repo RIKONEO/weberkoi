@@ -114,11 +114,11 @@ export async function parseBasket(
   const perOffer = new Map<string, number>();
   for (const [i, it] of raw.entries()) {
     // Przy kilku rybach mówimy, której dotyczy błąd; przy jednej zaczynamy zdanie wielką literą.
-    const label = raw.length > 1 ? `Ryba ${i + 1}: ` : "";
+    const label = raw.length > 1 ? `Pozycja ${i + 1}: ` : "";
     const err = (t: string) => ({ ok: false as const, error: label ? label + t : t[0].toUpperCase() + t.slice(1) });
     if (!offers.has(it.offerId)) offers.set(it.offerId, it.offerId ? await getOffer(it.offerId) : undefined);
     const offer = offers.get(it.offerId);
-    if (!offer) return err(`tej oferty nie ma już w sklepie. Usuń rybę z koszyka i wyślij resztę.`);
+    if (!offer) return err(`tej oferty nie ma już w sklepie. Usuń ją z koszyka i wyślij resztę.`);
     if (!it.files.length) return err(`dodaj stopklatkę albo screenshot z filmiku, na którym widać rybę.`);
     if (it.files.length > MAX_SHOTS_PER_ITEM) return err(`możesz dodać najwyżej ${MAX_SHOTS_PER_ITEM} zdjęcia.`);
     if (it.files.some((x) => !x.type.startsWith("image/"))) return err(`screenshot musi być obrazkiem (JPG, PNG lub podobny).`);
@@ -126,8 +126,9 @@ export async function parseBasket(
     const left = available(offer);
     const sum = (perOffer.get(offer.id) ?? 0) + it.qty;
     if (!Number.isInteger(it.qty) || it.qty < 1) return err(`podaj, ile ryb chcesz.`);
-    if (left === 0) return { ok: false, error: `„${offer.title}”: wszystkie ryby z tej grupy są już sprzedane. Usuń je z koszyka.` };
-    if (sum > left) return { ok: false, error: `„${offer.title}”: zostało tylko ${left} ${plural(left, "ryba", "ryby", "ryb")}, a w koszyku jest ${sum}. Zmniejsz liczbę.` };
+    const art = offer.kind === "obraz";
+    if (left === 0) return { ok: false, error: art ? `„${offer.title}”: ten obraz jest już wyprzedany. Usuń go z koszyka.` : `„${offer.title}”: wszystkie ryby z tej grupy są już sprzedane. Usuń je z koszyka.` };
+    if (sum > left) return { ok: false, error: `„${offer.title}”: zostało tylko ${left} ${art ? "szt." : plural(left, "ryba", "ryby", "ryb")}, a w koszyku jest ${sum}. Zmniejsz liczbę.` };
     perOffer.set(offer.id, sum);
     items.push({ offerId: offer.id, qty: it.qty, second: it.second, fishNo: it.fishNo, offer, files: it.files });
   }

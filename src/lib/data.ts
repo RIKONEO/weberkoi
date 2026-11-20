@@ -2,16 +2,17 @@
 import "server-only";
 import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, sql as dsql } from "drizzle-orm";
 import { db, schema } from "@/db";
-import type { FishMap, MapMarker, MapStatuses, Offer, TakenFish } from "./offers";
+import type { FishMap, MapMarker, MapStatuses, Offer, OfferKind, TakenFish } from "./offers";
 import type { Contact, EnquiryItem } from "./enquiry";
 import { randomUUID } from "node:crypto";
 
-const { offers, orderItems, enquiries, enquiryScreenshots, varieties, fishMaps } = schema;
+const { offers, orderItems, enquiries, enquiryScreenshots, varieties, fishMaps, offerPhotos } = schema;
 type OfferRow = typeof offers.$inferSelect;
 
 function toOffer(r: OfferRow): Offer {
   return {
     id: r.id,
+    kind: r.kind === "obraz" ? "obraz" : "ryba",
     variety: r.variety,
     title: r.title,
     breeder: r.breeder,
@@ -27,14 +28,23 @@ function toOffer(r: OfferRow): Offer {
     description: r.description,
     published: r.published,
     featured: r.featured,
+    dimensions: r.dimensions,
+    photos: [...r.photos],
     addedAt: r.addedAt.toISOString(),
   };
 }
 
-export async function listOffers({ includeHidden = false } = {}): Promise<Offer[]> {
-  const rows = await db.select().from(offers).where(includeHidden ? undefined : eq(offers.published, true)).orderBy(desc(offers.featured), desc(offers.addedAt));
+/** Oferty jednego rodzaju: domyślnie ryby (katalog, odmiany), z `kind: "obraz"` obrazy z metalu. */
+export async function listOffers({ includeHidden = false, kind = "ryba" as OfferKind } = {}): Promise<Offer[]> {
+  const rows = await db
+    .select()
+    .from(offers)
+    .where(and(eq(offers.kind, kind), includeHidden ? undefined : eq(offers.published, true)))
+    .orderBy(desc(offers.featured), desc(offers.addedAt));
   return rows.map(toOffer);
 }
+
+export const listArtworks = (opts: { includeHidden?: boolean } = {}) => listOffers({ ...opts, kind: "obraz" });
 
 export async function getOffer(id: string, { includeHidden = false } = {}): Promise<Offer | undefined> {
   const [r] = await db.select().from(offers).where(eq(offers.id, id));
@@ -275,7 +285,7 @@ export async function deleteOffer(id: string) {
 export async function listVarietiesWithCounts() {
   const [names, used] = await Promise.all([
     listVarieties(),
-    db.select({ variety: offers.variety, n: dsql<number>`count(*)::int` }).from(offers).groupBy(offers.variety),
+    db.select({ variety: offers.variety, n: dsql<number>`count(*)::int` }).from(offers).where(eq(offers.kind, "ryba")).groupBy(offers.variety),
   ]);
   const counts = new Map(used.map((r) => [r.variety, r.n]));
   return names.map((name) => ({ name, offers: counts.get(name) ?? 0 }));
@@ -296,14 +306,14 @@ export async function renameVariety(from: string, to: string) {
   if (all.some((v) => v !== from && v.toLowerCase() === to.toLowerCase())) return false;
   await db.transaction(async (tx) => {
     await tx.update(varieties).set({ name: to }).where(eq(varieties.name, from));
-    await tx.update(offers).set({ variety: to }).where(eq(offers.variety, from));
+    await tx.update(offers).set({ variety: to }).where(and(eq(offers.variety, from), eq(offers.kind, "ryba")));
   });
   return true;
 }
 
 /** Usuwa odmianę; false, gdy jakaś oferta jej jeszcze używa. */
 export async function deleteVariety(name: string) {
-  const [r] = await db.select({ n: dsql<number>`count(*)::int` }).from(offers).where(eq(offers.variety, name));
+  const [r] = await db.select({ n: dsql<number>`count(*)::int` }).from(offers).where(and(eq(offers.variety, name), eq(offers.kind, "ryba")));
   if ((r?.n ?? 0) > 0) return false;
   await db.delete(varieties).where(eq(varieties.name, name));
   return true;
@@ -344,4 +354,40 @@ export async function dashboardData(days = 14) {
     return { day, n: counts.get(day) ?? 0 };
   });
   return { status, series, latest, offers: all };
+}
+
+// --- zdjęcia produktów (obrazy z metalu) ---
+
+/** Zapisuje zdjęcie wgrane w panelu; zwraca jego adres w sklepie. */
+export async function addOfferPhoto(img: { mime: string; data: Buffer; width?: number; height?: number }, offerId?: string) {
+  const [r] = await db
+    .insert(offerPhotos)
+    .values({ offerId: offerId ?? null, mime: img.mime, data: img.data, width: img.width ?? null, height: img.height ?? null })
+    .returning({ id: offerPhotos.id });
+  return `/zdjecie/${r.id}`;
+}
+
+export async function getOfferPhoto(id: number) {
+  const [r] = await db.select({ mime: offerPhotos.mime, data: offerPhotos.data }).from(offerPhotos).where(eq(offerPhotos.id, id));
+  return r;
+}
+
+/** Numer zdjęcia z adresu /zdjecie/<id>; null dla zdjęć z plików (np. /img/obrazy/…). */
+export function photoId(url: string): number | null {
+  const m = /^\/zdjecie\/(\d+)$/.exec(url);
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * Po zapisie obrazu: zdjęcia z listy przypisujemy do oferty, a wgrane do niej wcześniej,
+ * których już nie ma na liście (Marcin je usunął), kasujemy z bazy.
+ */
+export async function syncOfferPhotos(offerId: string, photos: string[]) {
+  const keep = photos.map(photoId).filter((n): n is number => n != null);
+  await db.transaction(async (tx) => {
+    if (keep.length) await tx.update(offerPhotos).set({ offerId }).where(inArray(offerPhotos.id, keep));
+    await tx
+      .delete(offerPhotos)
+      .where(and(eq(offerPhotos.offerId, offerId), keep.length ? dsql`${offerPhotos.id} <> all(${dsql.raw(`array[${keep.join(",")}]::int[]`)})` : undefined));
+  });
 }

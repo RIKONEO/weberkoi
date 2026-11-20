@@ -4,10 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useCart } from "./cart/CartProvider";
-import { plural } from "@/lib/offers";
+import { ART, plural } from "@/lib/offers";
 
 const NAV = [
   { href: "/katalog", label: "Katalog" },
+  { href: ART.path, label: ART.name },
   { href: "/odbior", label: "Odbiór osobisty" },
   { href: "/kontakt", label: "Kontakt" },
 ];
@@ -35,6 +36,9 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           <Link href="/katalog" aria-current={path.startsWith("/katalog") ? "page" : undefined} className="nav-show-sm">
             Katalog
           </Link>
+          <Link href={ART.path} aria-current={path.startsWith(ART.path) ? "page" : undefined} className="nav-show-sm">
+            {ART.short}
+          </Link>
           <Link href="/kontakt" aria-current={path.startsWith("/kontakt") ? "page" : undefined} className="nav-show-sm">
             Kontakt
           </Link>
@@ -42,7 +46,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
             href="/koszyk"
             aria-current={path.startsWith("/koszyk") ? "page" : undefined}
             className="nav-cart"
-            aria-label={count ? `Koszyk, ${count} ${plural(count, "ryba", "ryby", "ryb")}` : "Koszyk"}
+            aria-label={count ? `Koszyk, ${count} ${plural(count, "pozycja", "pozycje", "pozycji")}` : "Koszyk"}
           >
             <svg className="nav-cart__icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path d="M3 9h18l-2 11H5L3 9Zm5 0 4-6 4 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />

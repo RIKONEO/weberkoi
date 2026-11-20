@@ -2,14 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PondHero } from "@/components/PondHero";
 import { OfferCard } from "@/components/OfferCard";
-import { listOffers } from "@/lib/data";
+import { ArtCard } from "@/components/ArtCard";
+import { listArtworks, listOffers } from "@/lib/data";
+import { ART } from "@/lib/offers";
 
 export const dynamic = "force-dynamic";
 // Każda podstrona ustawia swój adres kanoniczny; ten dotyczy tylko strony głównej.
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
-  const all = await listOffers();
+  const [all, art] = await Promise.all([listOffers(), listArtworks()]);
   const featured = all.filter((o) => o.featured);
   const latest = all.filter((o) => !o.featured).sort((a, b) => b.addedAt.localeCompare(a.addedAt)).slice(0, 3);
   return (
@@ -46,6 +48,24 @@ export default async function Home() {
           ))}
         </div>
       </section>
+      {art.length > 0 && (
+        <section className="wrap section">
+          <div className="section__head">
+            <div>
+              <div className="eyebrow">{ART.tagline}</div>
+              <h2>{ART.name}</h2>
+            </div>
+            <Link href={ART.path} className="btn">
+              Wszystkie obrazy
+            </Link>
+          </div>
+          <div className="grid art-grid">
+            {art.slice(0, 3).map((o) => (
+              <ArtCard key={o.id} offer={o} />
+            ))}
+          </div>
+        </section>
+      )}
       <section className="wrap section">
         <div className="steps">
           <div>

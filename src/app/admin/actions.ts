@@ -23,8 +23,10 @@ import {
   setEnquiryStatus,
   setOfferFlag,
   pgCode,
+  syncOfferPhotos,
 } from "@/lib/data";
-import { parseOfferForm, parseVarietyName } from "@/lib/offerForm";
+import { parseArtworkForm, parseOfferForm, parseVarietyName } from "@/lib/offerForm";
+import { ART } from "@/lib/offers";
 import { setSiteCookie } from "../wejscie/actions";
 
 export async function requireAdmin() {
@@ -60,6 +62,34 @@ function refreshShop(offerId?: string) {
   if (offerId) revalidatePath(`/oferta/${offerId}`);
 }
 
+// --- Koi Light Art: obrazy z metalu ---
+
+const ART_ADMIN = "/admin/light-art";
+
+export async function saveArtworkAction(form: FormData) {
+  await requireAdmin();
+  const existingId = String(form.get("existingId") ?? "") || undefined;
+  const back = existingId ? `${ART_ADMIN}/${existingId}` : `${ART_ADMIN}/nowy`;
+  const parsed = parseArtworkForm(form, existingId);
+  if (!parsed.ok) redirect(withError(back, parsed.error));
+  if (!existingId && (await getOffer(parsed.value.id, { includeHidden: true }))) {
+    redirect(withError(back, `Adres „${parsed.value.id}” jest już zajęty. Wpisz inny adres.`));
+  }
+  await saveOffer(parsed.value, existingId);
+  await syncOfferPhotos(parsed.value.id, parsed.value.photos ?? []);
+  refreshShop();
+  revalidatePath(`${ART.path}/${parsed.value.id}`);
+  redirect(`${ART_ADMIN}/${parsed.value.id}?zapisano=1`);
+}
+
+export async function deleteArtworkAction(form: FormData) {
+  await requireAdmin();
+  const id = String(form.get("id") ?? "");
+  await deleteOffer(id);
+  refreshShop();
+  redirect(ART_ADMIN);
+}
+
 export async function saveOfferAction(form: FormData) {
   await requireAdmin();
   const existingId = String(form.get("existingId") ?? "") || undefined;
@@ -93,6 +123,7 @@ export async function setOfferFlagAction(form: FormData) {
   await setOfferFlag(id, flag, form.get("on") === "1");
   refreshShop(id);
   revalidatePath("/admin/oferty");
+  revalidatePath(ART_ADMIN);
 }
 
 export async function setEnquiryStatusAction(form: FormData) {

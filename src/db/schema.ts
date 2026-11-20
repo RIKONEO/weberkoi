@@ -9,8 +9,13 @@ export const varieties = pgTable("varieties", {
   position: integer("position").notNull().default(0),
 });
 
+/** Rodzaj oferty: grupa żywych ryb z filmikiem albo podświetlany obraz z metalu (ze zdjęciami). */
+export const OFFER_KINDS = ["ryba", "obraz"] as const;
+export type OfferKind = (typeof OFFER_KINDS)[number];
+
 export const offers = pgTable("offers", {
-  id: text("id").primaryKey(), // slug w adresie /oferta/<id>
+  id: text("id").primaryKey(), // slug w adresie /oferta/<id> (obrazy: /obrazy/<id>)
+  kind: text("kind").$type<OfferKind>().notNull().default("ryba"),
   variety: text("variety").notNull(),
   title: text("title").notNull(),
   breeder: text("breeder").notNull().default(""),
@@ -30,7 +35,22 @@ export const offers = pgTable("offers", {
   description: text("description").notNull().default(""),
   published: boolean("published").notNull().default(true),
   featured: boolean("featured").notNull().default(false),
+  /** Obrazy: wymiary jako tekst, np. „60 × 120 cm”. Rybom niepotrzebne. */
+  dimensions: text("dimensions").notNull().default(""),
+  /** Obrazy: adresy zdjęć w kolejności (pierwsze = główne), np. /img/obrazy/asagi.jpg albo /zdjecie/12. */
+  photos: text("photos").array().notNull().default([]),
   addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Zdjęcia produktów wgrane w panelu (np. obrazów z metalu); pokazujemy je pod /zdjecie/<id>. */
+export const offerPhotos = pgTable("offer_photos", {
+  id: serial("id").primaryKey(),
+  offerId: text("offer_id").references(() => offers.id, { onDelete: "cascade" }),
+  mime: text("mime").notNull(),
+  data: bytea("data").notNull(),
+  width: integer("width"),
+  height: integer("height"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 // Tabele orders i order_items zostały po dawnym koszyku i płatnościach Stripe. Sklep ich już

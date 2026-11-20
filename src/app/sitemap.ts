@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
-import { listOffers, listVarieties } from "@/lib/data";
+import { listArtworks, listOffers, listVarieties } from "@/lib/data";
+import { ART, offerPath } from "@/lib/offers";
 import { varietySlug } from "@/lib/varieties";
 import { SITE_URL } from "@/lib/site";
 
@@ -7,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const url = (path: string) => new URL(path, SITE_URL).toString();
-  const [offers, varieties] = await Promise.all([listOffers(), listVarieties()]);
+  const [offers, varieties, art] = await Promise.all([listOffers(), listVarieties(), listArtworks()]);
   const withOffers = new Set(offers.map((o) => o.variety));
   const newest = offers.reduce((m, o) => (o.addedAt > m ? o.addedAt : m), "");
   return [
@@ -17,6 +18,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((v) => withOffers.has(v))
       .map((v) => ({ url: url(`/odmiany/${varietySlug(v)}`), changeFrequency: "weekly" as const, priority: 0.7 })),
     ...offers.map((o) => ({ url: url(`/oferta/${o.id}`), lastModified: o.addedAt, changeFrequency: "weekly" as const, priority: 0.8 })),
+    { url: url(ART.path), changeFrequency: "weekly", priority: 0.8 },
+    ...art.map((o) => ({ url: url(offerPath(o)), lastModified: o.addedAt, changeFrequency: "weekly" as const, priority: 0.7 })),
     { url: url("/odbior"), changeFrequency: "monthly", priority: 0.5 },
     { url: url("/kontakt"), changeFrequency: "monthly", priority: 0.5 },
     { url: url("/polityka-prywatnosci"), changeFrequency: "yearly", priority: 0.2 },
