@@ -8,7 +8,13 @@ const nextConfig: NextConfig = {
   },
   // Dawna strona „Wysyłka i odbiór”; sklep nie wysyła ryb, tylko zaprasza po odbiór.
   async redirects() {
-    return [{ source: "/wysylka-i-odbior", destination: "/odbior", permanent: true }];
+    return [
+      { source: "/wysylka-i-odbior", destination: "/odbior", permanent: true },
+      // Dział obrazów nazywał się wcześniej „Koi Light Art”.
+      { source: "/koi-light-art", destination: "/koi-art", permanent: true },
+      { source: "/koi-light-art/:id", destination: "/koi-art/:id", permanent: true },
+      { source: "/admin/light-art/:path*", destination: "/admin/koi-art/:path*", permanent: false },
+    ];
   },
 };
 

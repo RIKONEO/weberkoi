@@ -20,7 +20,7 @@ export type CartItem = {
   /** Numer ryby z mapy pod filmikiem; brak = własna stopklatka albo screenshot. */
   fishNo?: number;
   shot: Blob;
-  /** „obraz” = obraz z metalu z działu Koi Light Art (wtedy `shot` to jego zdjęcie); brak = ryba. */
+  /** „obraz” = obraz z metalu z działu Koi Art (wtedy `shot` to jego zdjęcie); brak = ryba. */
   kind?: "obraz";
   addedAt: number;
 };

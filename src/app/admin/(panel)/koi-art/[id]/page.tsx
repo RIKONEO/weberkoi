@@ -18,7 +18,7 @@ export default async function EditArtworkPage({ params, searchParams }: Props) {
   if (offer.kind !== "obraz") redirect(`/admin/oferty/${offer.id}`);
   return (
     <div className="stack admin-narrow">
-      <Link href="/admin/light-art" className="back">← {ART.name}</Link>
+      <Link href="/admin/koi-art" className="back">← {ART.name}</Link>
       <div className="row row--between">
         <h1 className="page-title">{offer.title}</h1>
         {offer.published && <Link href={offerPath(offer)} target="_blank" className="btn">Zobacz w sklepie ↗</Link>}
