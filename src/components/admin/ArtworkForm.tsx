@@ -3,7 +3,7 @@ import { saveArtworkAction } from "@/app/admin/actions";
 import { MAX_ART_PHOTOS } from "@/lib/offerForm";
 import { PhotosField } from "./PhotosField";
 
-/** Formularz obrazu z metalu (dział Koi Light Art); bez `offer` dodaje nowy. */
+/** Formularz obrazu z metalu (dział Koi Art); bez `offer` dodaje nowy. */
 export function ArtworkForm({ offer }: { offer?: Offer }) {
   return (
     <form action={saveArtworkAction} className="panel offer-form">

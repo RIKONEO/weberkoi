@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function OfferPage({ params }: Props) {
   const offer = await getOffer((await params).id);
   if (!offer) notFound();
-  // Obrazy z metalu mają własną stronę w dziale Koi Light Art.
+  // Obrazy z metalu mają własną stronę w dziale Koi Art.
   if (offer.kind !== "ryba") permanentRedirect(offerPath(offer));
   const [taken, map, statuses] = await Promise.all([listTakenFish(offer.id), getFishMap(offer.id), listMapStatuses(offer)]);
   return (

@@ -68,9 +68,9 @@ function refreshShop(offerId?: string) {
   if (offerId) revalidatePath(`/oferta/${offerId}`);
 }
 
-// --- Koi Light Art: obrazy z metalu ---
+// --- Koi Art: obrazy z metalu ---
 
-const ART_ADMIN = "/admin/light-art";
+const ART_ADMIN = "/admin/koi-art";
 
 export async function saveArtworkAction(form: FormData) {
   await requireAdmin();

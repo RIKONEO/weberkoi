@@ -93,7 +93,7 @@ export const MAX_ART_PHOTOS = 8;
 /** Adres zdjęcia obrazu: wgrane w panelu (/zdjecie/12) albo plik ze strony (/img/…). */
 const PHOTO_URL = /^\/(zdjecie\/\d+|img\/[\w./-]+\.(jpe?g|png|webp))$/;
 
-/** Formularz obrazu z metalu (dział Koi Light Art) z panelu admina. */
+/** Formularz obrazu z metalu (dział Koi Art) z panelu admina. */
 export function parseArtworkForm(f: FormData, existingId?: string): { ok: true; value: OfferInput } | { ok: false; error: string } {
   const get = (k: string) => String(f.get(k) ?? "").trim();
   const title = get("title");

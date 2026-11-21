@@ -9,7 +9,7 @@ export default async function NewArtworkPage({ searchParams }: { searchParams: P
   const { blad } = await searchParams;
   return (
     <div className="stack admin-narrow">
-      <Link href="/admin/light-art" className="back">← Koi Light Art</Link>
+      <Link href="/admin/koi-art" className="back">← Koi Art</Link>
       <h1 className="page-title">Nowy obraz</h1>
       <Flash error={blad} />
       <ArtworkForm />

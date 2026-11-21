@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { type Offer, available, formatPLN, offerPath } from "@/lib/offers";
 
-/** Kafelek obrazu z metalu (dział Koi Light Art): zdjęcie zamiast filmiku. */
+/** Kafelek obrazu z metalu (dział Koi Art): zdjęcie zamiast filmiku. */
 export function ArtCard({ offer }: { offer: Offer }) {
   const soldOut = available(offer) === 0;
   return (

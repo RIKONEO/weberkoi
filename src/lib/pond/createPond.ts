@@ -362,7 +362,8 @@ export function createPond(canvas: HTMLCanvasElement, container: HTMLElement, op
     if (now - lastT > 70 && Math.hypot(x - last[0], y - last[1]) > 0.25) { ripple(x, y, 0.28); last = [x, y]; lastT = now; }
   };
   const onDown = (e: PointerEvent) => { const [x, y] = toWorld(e.clientX, e.clientY); dropFood(x, y, 5); };
-  canvas.addEventListener("pointermove", onMove);
+  // Ruch myszy słuchamy na całym kontenerze: w hero staw przykrywają klikalne sekcje.
+  container.addEventListener("pointermove", onMove);
   canvas.addEventListener("pointerdown", onDown);
 
   // --- pętla ---
@@ -405,7 +406,7 @@ export function createPond(canvas: HTMLCanvasElement, container: HTMLElement, op
       running = false;
       cancelAnimationFrame(raf);
       ro.disconnect();
-      canvas.removeEventListener("pointermove", onMove);
+      container.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerdown", onDown);
       while (fish.length) removeFish(fish.pop()!);
       scene.traverse((o) => { if (o instanceof THREE.Mesh) { o.geometry.dispose(); const m = o.material as THREE.MeshBasicMaterial; m.map?.dispose(); m.dispose(); } });

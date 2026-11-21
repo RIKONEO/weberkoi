@@ -4,7 +4,7 @@
 /** Nazwa odmiany; lista odmian jest w bazie (tabela varieties). */
 export type Variety = string;
 
-/** „ryba” = grupa żywych koi z filmikiem, „obraz” = obraz ze stali (Koi Light Art) ze zdjęciami. */
+/** „ryba” = grupa żywych koi z filmikiem, „obraz” = obraz ze stali (Koi Art) ze zdjęciami. */
 export type OfferKind = "ryba" | "obraz";
 
 export type Offer = {
@@ -40,9 +40,9 @@ export type Offer = {
 };
 
 /** Nazwa działu z obrazami z metalu i jego adres; zmiana nazwy działu = zmiana tutaj. */
-export const ART = { name: "Koi Light Art", short: "Light Art", tagline: "Obrazy ze stali cięte laserem", path: "/koi-light-art" } as const;
+export const ART = { name: "Koi Art", short: "Koi Art", tagline: "Obrazy ze stali cięte laserem", path: "/koi-art" } as const;
 
-/** Adres strony oferty w sklepie: ryby pod /oferta, obrazy w dziale Koi Light Art. */
+/** Adres strony oferty w sklepie: ryby pod /oferta, obrazy w dziale Koi Art. */
 export function offerPath(o: Pick<Offer, "id" | "kind">): string {
   return o.kind === "obraz" ? `${ART.path}/${o.id}` : `/oferta/${o.id}`;
 }

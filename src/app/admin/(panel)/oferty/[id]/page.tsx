@@ -15,8 +15,8 @@ export default async function EditOfferPage({ params, searchParams }: Props) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const [offer, varieties] = await Promise.all([getOffer(id, { includeHidden: true }), listVarieties()]);
   if (!offer) notFound();
-  // Obrazy z metalu (np. z linku w zgłoszeniu) edytujemy w dziale Koi Light Art.
-  if (offer.kind === "obraz") redirect(`/admin/light-art/${offer.id}`);
+  // Obrazy z metalu (np. z linku w zgłoszeniu) edytujemy w dziale Koi Art.
+  if (offer.kind === "obraz") redirect(`/admin/koi-art/${offer.id}`);
   const [map, statuses] = await Promise.all([getFishMap(offer.id, { includeHidden: true }), listMapStatuses(offer)]);
   return (
     <div className="stack admin-narrow">

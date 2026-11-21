@@ -23,7 +23,7 @@ export default async function ArtAdminPage() {
     <div className="stack">
       <div className="row row--between">
         <h1 className="page-title">{ART.name}</h1>
-        <Link href="/admin/light-art/nowy" className="btn btn--primary">+ Dodaj obraz</Link>
+        <Link href="/admin/koi-art/nowy" className="btn btn--primary">+ Dodaj obraz</Link>
       </div>
       <p className="muted small">{ART.tagline}. Klient dodaje obraz do koszyka (także razem z rybami) i wysyła zwykłe zgłoszenie, które trafia do „Zgłoszeń”. Kliknij „Edytuj”, żeby ustawić cenę, wymiary, opis i zdjęcia.</p>
       {rows.length ? (
@@ -36,7 +36,7 @@ export default async function ArtAdminPage() {
               )}
               <div className="stack">
                 <div className="admin-offer__head">
-                  <Link href={`/admin/light-art/${o.id}`}><b>{o.title}</b></Link>
+                  <Link href={`/admin/koi-art/${o.id}`}><b>{o.title}</b></Link>
                   <div className="row">
                     {o.featured && <span className="pill pill--hi">Wyróżniony</span>}
                     {!o.published && <span className="pill pill--mu">Ukryty</span>}
@@ -47,7 +47,7 @@ export default async function ArtAdminPage() {
                   <span className="num">{available(o)} / {o.count}</span> do sprzedania · {o.photos.length} {o.photos.length === 1 ? "zdjęcie" : "zdjęć"}
                 </div>
                 <div className="row">
-                  <Link href={`/admin/light-art/${o.id}`} className="btn btn--sm">Edytuj</Link>
+                  <Link href={`/admin/koi-art/${o.id}`} className="btn btn--sm">Edytuj</Link>
                   <Toggle id={o.id} flag="featured" on={o.featured} label="Wyróżniony" />
                   <Toggle id={o.id} flag="published" on={o.published} label="W sklepie" />
                 </div>
