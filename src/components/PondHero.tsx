@@ -85,7 +85,6 @@ export function PondHero() {
           <span className="side__shade" aria-hidden />
           <span className="side__light" aria-hidden />
           <span className="side__body">
-            <span className="side__num" aria-hidden>01</span>
             <span className="side__eyebrow">Z Japonii i z naszej hodowli</span>
             <span className="side__title">Ryby koi</span>
             <span className="side__kinds">Kohaku, Sanke, Showa, Ogon i Chagoi</span>
@@ -103,7 +102,6 @@ export function PondHero() {
             <span className="side__img" aria-hidden />
             <span className="side__light" aria-hidden />
             <span className="side__body">
-              <span className="side__num" aria-hidden>02</span>
               <span className="side__eyebrow">{ART.tagline}</span>
               <span className="side__title">{ART.name}</span>
               <span className="side__kinds">Nasze wzory, cięte na wymiar do{"\u00a0"}2{"\u00a0"}×{"\u00a0"}2{"\u00a0"}m</span>
