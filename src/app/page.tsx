@@ -13,7 +13,6 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 export default async function Home() {
   const [all, art] = await Promise.all([listOffers(), listArtworks()]);
   const featured = all.filter((o) => o.featured);
-  const latest = all.filter((o) => !o.featured).sort((a, b) => b.addedAt.localeCompare(a.addedAt)).slice(0, 3);
   return (
     <main>
       <PondHero />
@@ -24,6 +23,9 @@ export default async function Home() {
               <div className="eyebrow">Polecamy</div>
               <h2>Wyróżnione grupy</h2>
             </div>
+            <Link href="/katalog" className="btn">
+              Cały katalog
+            </Link>
           </div>
           <div className="grid">
             {featured.map((o) => (
@@ -32,22 +34,6 @@ export default async function Home() {
           </div>
         </section>
       )}
-      <section className="wrap section">
-        <div className="section__head">
-          <div>
-            <div className="eyebrow">Nowe w stawie</div>
-            <h2>Ostatnio dodane grupy</h2>
-          </div>
-          <Link href="/katalog" className="btn">
-            Cały katalog
-          </Link>
-        </div>
-        <div className="grid">
-          {latest.map((o) => (
-            <OfferCard key={o.id} offer={o} />
-          ))}
-        </div>
-      </section>
       {art.length > 0 && (
         <section className="wrap section">
           <div className="section__head">
