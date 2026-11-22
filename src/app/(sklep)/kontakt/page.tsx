@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CONTACT } from "@/lib/contact";
 
 export const metadata: Metadata = {
-  title: "Kontakt",
+  title: "Kontakt: sklep z koi w Zakrzewie",
   description: "Zadzwoń, napisz SMS-a, maila albo na Facebooku. WEBER Nishikigoi, Zakrzewo, tel. 887 398 896.",
   alternates: { canonical: "/kontakt" },
 };

@@ -7,6 +7,8 @@ import { OPEN_GRAPH_BASE } from "@/lib/site";
 import { CONTACT } from "@/lib/contact";
 import { ArtGallery } from "@/components/ArtGallery";
 import { AddArtToCart } from "@/components/AddArtToCart";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbSchema, offerSchema } from "@/lib/schema-org";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -32,6 +34,8 @@ export default async function ArtworkPage({ params }: Props) {
   const left = available(offer);
   return (
     <div className="wrap section">
+      <JsonLd data={offerSchema(offer)} />
+      <JsonLd data={breadcrumbSchema([{ name: ART.name, path: ART.path }, { name: offer.title, path: `${ART.path}/${offer.id}` }])} />
       <Link href={ART.path} className="back">← Wszystkie obrazy {ART.name}</Link>
       <div className="offer art">
         <ArtGallery photos={offer.photos} title={offer.title} />

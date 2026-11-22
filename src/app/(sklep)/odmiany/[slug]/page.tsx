@@ -5,6 +5,9 @@ import { OfferCard } from "@/components/OfferCard";
 import { listOffers, listVarieties } from "@/lib/data";
 import { varietyInfo, varietySlug } from "@/lib/varieties";
 import { OPEN_GRAPH_BASE } from "@/lib/site";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbSchema } from "@/lib/schema-org";
+import { GUIDE } from "@/lib/guide";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -17,7 +20,7 @@ async function findVariety(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const name = await findVariety((await params).slug);
   if (!name) return {};
-  const title = `Koi ${name} na sprzedaż`;
+  const title = `Koi ${name} na sprzedaż: karpie koi ${name}`;
   const description = `${varietyInfo(name)} Każda ryba na filmiku, odbiór osobisty w Zakrzewie.`;
   const url = `/odmiany/${varietySlug(name)}`;
   return { title, description, alternates: { canonical: url }, openGraph: { ...OPEN_GRAPH_BASE, title, description, url } };
@@ -29,6 +32,7 @@ export default async function VarietyPage({ params }: Props) {
   const offers = (await listOffers()).filter((o) => o.variety === name);
   return (
     <div className="wrap section">
+      <JsonLd data={breadcrumbSchema([{ name: "Katalog koi", path: "/katalog" }, { name: `Koi ${name}`, path: `/odmiany/${varietySlug(name)}` }])} />
       <Link href="/katalog" className="back">← Cały katalog</Link>
       <div className="eyebrow">Odmiana</div>
       <h1 className="page-title">Koi {name}</h1>
@@ -44,6 +48,9 @@ export default async function VarietyPage({ params }: Props) {
           Teraz nie mamy ryb tej odmiany na sprzedaż. Zadzwoń albo napisz, damy znać, gdy się pojawią. <Link href="/katalog">Zobacz inne koi</Link>
         </p>
       )}
+      <p className="muted small" style={{ marginTop: 28 }}>
+        Nie wiesz, którą odmianę wybrać? Przeczytaj <Link href={GUIDE.path}>poradnik o karpiach koi</Link>.
+      </p>
     </div>
   );
 }

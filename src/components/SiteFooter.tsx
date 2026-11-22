@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CONTACT } from "@/lib/contact";
+import { GUIDE } from "@/lib/guide";
 
 export function SiteFooter() {
   return (
@@ -7,6 +8,7 @@ export function SiteFooter() {
       <div className="wrap site-footer__row">
         <span>WEBER Nishikigoi · Koi Fish Seller</span>
         <nav aria-label="Informacje">
+          <Link href={GUIDE.path}>Karpie koi: poradnik</Link>
           <Link href="/odbior">Odbiór osobisty</Link>
           <Link href="/kontakt">Kontakt</Link>
           <a href={CONTACT.phoneHref}>{CONTACT.phone}</a>

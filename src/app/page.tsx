@@ -5,6 +5,7 @@ import { OfferCard } from "@/components/OfferCard";
 import { ArtCard } from "@/components/ArtCard";
 import { listArtworks, listOffers } from "@/lib/data";
 import { ART } from "@/lib/offers";
+import { FAQ, GUIDE } from "@/lib/guide";
 
 export const dynamic = "force-dynamic";
 // Każda podstrona ustawia swój adres kanoniczny; ten dotyczy tylko strony głównej.
@@ -66,6 +67,28 @@ export default async function Home() {
             <h3>Odbierasz rybę u nas</h3>
             <p className="muted">Przyjeżdżasz do Zakrzewa w umówionym terminie, a my pakujemy rybę w worek z tlenem. Nie wysyłamy ryb kurierem.</p>
           </div>
+        </div>
+      </section>
+      <section className="wrap section about-koi" aria-labelledby="o-koi">
+        <div className="about-koi__text prose">
+          <div className="eyebrow">Sklep z koi w Zakrzewie</div>
+          <h2 id="o-koi">Karpie koi z Japonii i z naszej hodowli</h2>
+          <p>
+            W WEBER Nishikigoi sprzedajemy karpie koi do oczek i stawów ogrodowych: klasyczne Kohaku, Showa i Sanke, metaliczne Ogon
+            i ufne Chagoi. Każdą grupę ryb nagrywamy na filmiku, więc wybierasz konkretną rybę i widzisz, jak pływa. Ryby odbierasz
+            osobiście w Zakrzewie, bez wysyłki kurierem.
+          </p>
+          <p>
+            <Link href={GUIDE.path}>Poradnik: jak wybrać i kupić koi</Link>
+          </p>
+        </div>
+        <div className="faq">
+          {FAQ.slice(0, 4).map((f) => (
+            <details key={f.q}>
+              <summary>{f.q}</summary>
+              <p className="muted">{f.a}</p>
+            </details>
+          ))}
         </div>
       </section>
     </main>
