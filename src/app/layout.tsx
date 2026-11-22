@@ -7,6 +7,7 @@ import { CartProvider } from "@/components/cart/CartProvider";
 import { OPEN_GRAPH_BASE, SITE_URL } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { storeSchema, websiteSchema } from "@/lib/schema-org";
+import { VisitorAnalytics } from "@/components/VisitorAnalytics";
 
 export const metadata: Metadata = {
   title: { default: "Karpie koi na sprzedaż: sklep z rybami koi · WEBER Nishikigoi", template: "%s · WEBER Nishikigoi" },
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           {children}
           <SiteFooter />
         </CartProvider>
+        <VisitorAnalytics />
       </body>
     </html>
   );
