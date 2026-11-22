@@ -38,5 +38,5 @@ export async function middleware(req: NextRequest) {
   return locked(NextResponse.redirect(url));
 }
 
-// Wszystko poza plikami Next.js, ikonami strony (favicon, icon, apple-icon) i logo z /public, żeby były widoczne także przy blokadzie hasłem.
-export const config = { matcher: ["/((?!_next/static|_next/image|favicon\\.ico|icon\\.png|apple-icon\\.png|logo[^/]*\\.jpg).*)"] };
+// Wszystko poza plikami Next.js, statystykami Vercela (/_vercel), ikonami strony (favicon, icon, apple-icon) i logo z /public, żeby były widoczne także przy blokadzie hasłem.
+export const config = { matcher: ["/((?!_next/static|_vercel|_next/image|favicon\\.ico|icon\\.png|apple-icon\\.png|logo[^/]*\\.jpg).*)"] };
