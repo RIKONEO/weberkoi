@@ -6,7 +6,7 @@ import { SIZE_FILTERS } from "@/lib/offers";
 import { varietySlug } from "@/lib/varieties";
 
 export const metadata: Metadata = {
-  title: "Katalog koi na sprzedaż",
+  title: "Karpie koi na sprzedaż: katalog ryb koi",
   description: "Karpie koi na sprzedaż: Kohaku, Showa, Sanke, Ogon, Chagoi i inne. Każda ryba na filmiku, cena za sztukę, odbiór osobisty w Zakrzewie.",
   // Filtry w adresie (?odmiana=…) to ta sama strona; Google ma liczyć ją raz.
   alternates: { canonical: "/katalog" },
@@ -36,7 +36,7 @@ export default async function Catalog({ searchParams }: { searchParams: Promise<
   return (
     <div className="wrap section">
       <div className="eyebrow">Katalog</div>
-      <h1 className="page-title">Koi na sprzedaż</h1>
+      <h1 className="page-title">Karpie koi na sprzedaż</h1>
 
       <div className="filters" aria-label="Filtry">
         <div className="filters__row">

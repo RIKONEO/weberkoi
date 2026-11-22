@@ -6,7 +6,7 @@ import { getFishMap, getOffer, listMapStatuses, listTakenFish } from "@/lib/data
 import { available, formatPLN, offerPath, offerSummary, sizeLabel } from "@/lib/offers";
 import { OPEN_GRAPH_BASE } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
-import { offerSchema } from "@/lib/schema-org";
+import { breadcrumbSchema, offerSchema } from "@/lib/schema-org";
 import { varietySlug } from "@/lib/varieties";
 
 type Props = { params: Promise<{ id: string }> };
@@ -17,11 +17,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const offer = await getOffer((await params).id);
   if (!offer) return {};
   const description = offerSummary(offer);
+  // „koi” w tytule pomaga przy wyszukiwaniu „koi kohaku”, „karp koi showa” itd.
+  const title = /koi/i.test(offer.title) ? `${offer.title} na sprzedaż` : `Koi ${offer.title} na sprzedaż`;
   return {
-    title: offer.title,
+    title,
     description,
     alternates: { canonical: `/oferta/${offer.id}` },
-    openGraph: { ...OPEN_GRAPH_BASE, title: offer.title, description, url: `/oferta/${offer.id}` },
+    openGraph: { ...OPEN_GRAPH_BASE, title, description, url: `/oferta/${offer.id}` },
   };
 }
 
@@ -34,6 +36,13 @@ export default async function OfferPage({ params }: Props) {
   return (
     <div className="wrap section">
       <JsonLd data={offerSchema(offer)} />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Katalog koi", path: "/katalog" },
+          { name: `Koi ${offer.variety}`, path: `/odmiany/${varietySlug(offer.variety)}` },
+          { name: offer.title, path: `/oferta/${offer.id}` },
+        ])}
+      />
       <Link href="/katalog" className="back">← Wróć do katalogu</Link>
       <OfferPicker
         offer={offer}

@@ -540,3 +540,15 @@ a.kpi:hover { border-color: var(--paper-2); }
 }
 .art-custom { margin: 40px 0 32px; max-width: 760px; }
 .art-custom h2 { margin: 0; }
+
+/* poradnik i pytania o koi (strona główna, /karpie-koi) */
+.about-koi { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; border-top: 1px solid var(--line); padding-top: 32px; }
+.about-koi__text { display: flex; flex-direction: column; gap: 12px; }
+.faq { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.faq details { border-bottom: 1px solid var(--line); padding: 14px 0; }
+.faq summary { cursor: pointer; font-weight: 600; list-style-position: inside; }
+.faq details p { margin-top: 8px; }
+.guide__varieties { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.guide__varieties a { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; text-decoration: none; }
+.guide__varieties a:hover { border-color: var(--paper-2); }
+@media (max-width: 760px) { .about-koi { grid-template-columns: 1fr; gap: 20px; } }

@@ -3,7 +3,7 @@ import { CONTACT } from "@/lib/contact";
 import { PICKUP_TEXT } from "@/lib/pickup";
 
 export const metadata: Metadata = {
-  title: "Odbiór osobisty",
+  title: "Odbiór osobisty koi w Zakrzewie",
   description: "Koi odbierasz osobiście w Zakrzewie (77-424, ul. Za torami 1). Umawiamy termin, pakujemy rybę w worek z tlenem na drogę.",
   alternates: { canonical: "/odbior" },
 };

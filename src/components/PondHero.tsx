@@ -74,6 +74,8 @@ export function PondHero() {
       <canvas ref={canvasRef} className="hero__pond" aria-hidden />
       {mode === "none" && <div className="hero__fallback" aria-hidden />}
       <SiteHeader overlay />
+      {/* Nagłówek strony dla Google i czytników ekranu; wizualnie hero mówi to kaflami. */}
+      <h1 className="visually-hidden">Karpie koi na sprzedaż: sklep z rybami koi WEBER Nishikigoi w Zakrzewie</h1>
       <nav className="split" aria-label="Co oglądasz?">
         <Link
           href="/katalog"
